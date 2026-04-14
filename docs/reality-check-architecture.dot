@@ -1,0 +1,95 @@
+digraph reality_check_architecture {
+    rankdir=TB
+    label="amplifier-bundle-reality-check"
+    labelloc=t
+    fontname="Helvetica"
+    fontsize=14
+    compound=true
+    node [shape=box, style="rounded,filled", fillcolor="#e8f0fe", fontname="Helvetica"]
+    edge [fontname="Helvetica", fontsize=10]
+
+    // --- External inputs ---
+    subgraph cluster_user_interactions {
+        label="User Interactions"
+        style="rounded,dashed"
+        color="#666666"
+        fontname="Helvetica"
+        fontsize=11
+
+        spec [label="Spec / requirements", shape=note, fillcolor="#fff8e1"]
+        conversation [label="Agent conversation\nhistory", shape=note, fillcolor="#fff8e1"]
+        feedback [label="User feedback /\nclarifications", shape=note, fillcolor="#fff8e1"]
+    }
+
+    software [label="Software\n(repo, directory, artifact)", shape=folder, fillcolor="#f5f5f5", fontsize=12]
+
+    // --- Reality Check agents ---
+    subgraph cluster_reality_check {
+        label="amplifier-bundle-reality-check"
+        style="rounded,filled"
+        color="#2d7d46"
+        fillcolor="#f0f8f0"
+        fontname="Helvetica"
+        fontsize=11
+
+        intent [label="Intent Analyzer\nagent", fillcolor="#c8e6c9"]
+        criteria [label="Verification\nCriteria", shape=note, fillcolor="#fff8e1"]
+        intent -> criteria [label="produces"]
+
+        subgraph cluster_validators {
+            label="Validators"
+            style="rounded,dashed"
+            color="#999999"
+            fontname="Helvetica"
+            fontsize=9
+
+            browser_tester [label="Browser Tester\nagent", fillcolor="#c8e6c9"]
+            other_validators [label="Other validators\n(CLI, API, ...)", fillcolor="#c8e6c9", style="rounded,filled,dashed"]
+        }
+
+        reporter [label="Report\nagent", fillcolor="#c8e6c9"]
+    }
+
+    // --- DTU (external dependency) ---
+    subgraph cluster_dtu {
+        label="amplifier-bundle-digital-twin-universe"
+        style="rounded,dashed"
+        color="#1a73e8"
+        fontname="Helvetica"
+        fontsize=10
+
+        profile_builder [label="DTU Profile Builder\nagent", fillcolor="#bbdefb"]
+        dtu_env [label="Digital Twin\nEnvironment", fillcolor="#bbdefb"]
+        profile_builder -> dtu_env [label="launches"]
+    }
+
+    // --- Outputs ---
+    report [label="Reality Check\nReport", shape=note, fillcolor="#ffcdd2", fontsize=11]
+    visual [label="User-facing\nverification artifact\n(visual, dashboard, ...)", shape=note, fillcolor="#ffcdd2", style="rounded,filled,dashed"]
+
+    // --- Flow ---
+
+    // User interactions feed intent analysis
+    spec -> intent [lhead=cluster_reality_check]
+    conversation -> intent [lhead=cluster_reality_check]
+    feedback -> intent [lhead=cluster_reality_check]
+
+    // Software feeds DTU profile builder
+    software -> profile_builder [label="builds profile\nfrom"]
+
+    // Criteria drives validation
+    criteria -> browser_tester
+    criteria -> other_validators
+
+    // DTU environment is what gets tested
+    dtu_env -> browser_tester [label="tests against"]
+    dtu_env -> other_validators [label="tests against", style=dashed]
+
+    // Validators feed reporter
+    browser_tester -> reporter [label="results"]
+    other_validators -> reporter [label="results", style=dashed]
+
+    // Reporter produces outputs
+    reporter -> report [label="produces"]
+    reporter -> visual [label="generates", style=dashed]
+}

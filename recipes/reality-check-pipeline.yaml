@@ -1,0 +1,112 @@
+# End-to-end reality check pipeline.
+#
+# Required bundles: reality-check, digital-twin-universe
+# Required CLIs:    amplifier-digital-twin, amplifier-gitea (if local repos),
+#                   agent-browser
+
+name: reality-check-pipeline
+description: >
+  Derives acceptance tests from user intent, deploys software in a Digital Twin
+  Universe environment, runs browser-based verification, and produces a gap
+  analysis report with an HTML artifact.
+version: 0.1.0
+author: dkoleczek
+
+context:
+  spec_path: ""                # Path to spec / requirements file
+  conversation_path: ""        # Path to conversation history file (optional)
+  feedback_path: ""            # Path to user feedback / clarifications (optional)
+  software_path: ""            # Path to the software repo or directory to test
+  output_dir: "./reality-check-output"  # Root directory for all outputs
+  software_description: ""     # Optional hint for DTU (e.g. "FastAPI web app, needs ANTHROPIC_API_KEY, port 8410")
+
+steps:
+  # ------------------------------------------------------------------
+  # 1. Intent Analysis
+  #    Reads spec, conversation, and feedback files. Explores the software
+  #    to ground tests in real values. Produces acceptance-tests.yaml.
+  # ------------------------------------------------------------------
+  - id: intent-analysis
+    agent: "reality-check:intent-analyzer"
+    prompt: |
+      Analyze user intent and produce acceptance tests.
+
+      Output path: {{output_dir}}/acceptance-tests.yaml
+
+      Read these files to understand what the user wanted:
+      - Spec / requirements: {{spec_path}}
+      - Conversation history: {{conversation_path}}
+      - User feedback: {{feedback_path}}
+
+      Then explore the software at {{software_path}} to ground the tests
+      in real values (ports, routes, commands, entry points).
+
+      Skip any file paths that are empty strings.
+    output: "intent_result"
+    timeout: 900
+
+  # ------------------------------------------------------------------
+  # 2. DTU Launch
+  #    Explores the software, generates a DTU profile, launches the
+  #    environment, and returns access details (URL, environment ID).
+  # ------------------------------------------------------------------
+  - id: dtu-launch
+    agent: "digital-twin-universe:dtu-profile-builder"
+    prompt: |
+      The software at {{software_path}} needs to be deployed in a Digital Twin
+      Universe environment for testing.
+
+      {{software_description}}
+
+      Generate a DTU profile, launch the environment, and return access details.
+      Save the profile to {{software_path}}/.amplifier/digital-twin-universe/profiles/
+
+      The intent analyzer found the following about this software:
+      {{intent_result}}
+    output: "dtu_result"
+    timeout: 1800
+
+  # ------------------------------------------------------------------
+  # 3. Browser Testing
+  #    Runs every browser-type acceptance test against the live DTU
+  #    environment. Saves screenshots.
+  # ------------------------------------------------------------------
+  - id: browser-testing
+    agent: "reality-check:browser-tester"
+    prompt: |
+      Run browser tests against the deployed application.
+
+      Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
+      Screenshot directory: {{output_dir}}/screenshots/
+
+      The DTU environment was launched with these details:
+      {{dtu_result}}
+
+      Extract the access URL from the DTU details above and run every
+      browser-type test from the acceptance tests file against it.
+    output: "browser_results"
+    timeout: 1200
+
+  # ------------------------------------------------------------------
+  # 4. Report
+  #    Synthesizes acceptance tests + validator results into a structured
+  #    gap analysis with report.yaml and report.html.
+  # ------------------------------------------------------------------
+  - id: report-generation
+    agent: "reality-check:report"
+    prompt: |
+      Produce the reality check report.
+
+      acceptance_tests_path: {{output_dir}}/acceptance-tests.yaml
+      output_dir: {{output_dir}}/report/
+
+      --- browser-tester results ---
+      {{browser_results}}
+      --- end browser-tester results ---
+
+      After writing the report, include the DTU environment details so the
+      user can interact with the deployed software themselves:
+
+      {{dtu_result}}
+    output: "final_output"
+    timeout: 900

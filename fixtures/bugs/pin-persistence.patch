@@ -1,0 +1,11 @@
+--- a/src/chat_plugin/pin_storage.py
++++ b/src/chat_plugin/pin_storage.py
+@@ -34,7 +34,7 @@
+         tmp = self._path.with_suffix(".json.tmp")
+         tmp.write_text(
+             json.dumps(
+-                {"pinned": self._pins, "pinned_at": self._pinned_at},
++                {"pins": self._pins, "pinned_at": self._pinned_at},
+                 indent=2,
+             )
+             + "\n",

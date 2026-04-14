@@ -1,0 +1,17 @@
+bundle:
+  name: reality-check-behavior
+  version: 0.1.0
+  description: Verifies built software matches user intent through environment testing and completion verification
+
+includes:
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe@main
+
+agents:
+  include:
+    - reality-check:intent-analyzer
+    - reality-check:browser-tester
+    - reality-check:report
+
+context:
+  include:
+    - reality-check:context/reality-check-awareness.md

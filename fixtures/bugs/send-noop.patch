@@ -1,0 +1,11 @@
+--- a/src/chat_plugin/static/index.html
++++ b/src/chat_plugin/static/index.html
+@@ -5603,7 +5603,7 @@
+       const ta = textareaRef.current;
+       if (!ta) return;
+       const content = ta.value.trim();
+-      if (!content && pendingImages.length === 0) return;
++      if (!content || pendingImages.length === 0) return;
+ 
+       // Slash commands always bypass the queue and send directly
+       if (shouldQueue && !content.startsWith('/')) {
