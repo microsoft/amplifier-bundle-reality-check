@@ -7,7 +7,7 @@ You have access to the Amplifier Reality Check bundle for verifying that built s
 - User has built software and wants to verify it works as intended
 - User wants end-to-end validation in a realistic isolated environment
 - User needs acceptance tests derived from their conversation and spec
-- Do NOT use this to validate the amplifier ecosystem. You should use `amplifier-bundle-ecosystem-validation`. If it is not installed, tell the user to get that bundle. Only use this bundle if they insist.
+- Do NOT use this to validate the amplifier ecosystem. You should use `amplifier-bundle-amplifier-tester`. If it is not installed, tell the user to get that bundle. Only use this bundle if they insist.
 
 ## How to Use
 
