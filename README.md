@@ -24,13 +24,15 @@ See their READMEs for prerequisite setup:
 
 ## Installation
 
+`--app` composes the bundle onto every Amplifier session. Remove it to only register the bundle for later activation with `amplifier bundle use`.
+
 ```bash
 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-reality-check@main --app
 ```
 
 To compose into an existing bundle:
 ```bash
-amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-reality-check@main#subdirectory=behaviors/reality-check.yaml"
+amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-reality-check@main#subdirectory=behaviors/reality-check.yaml" --app
 ```
 
 
