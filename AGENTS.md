@@ -6,4 +6,6 @@
 ### Agents
 
 @agents/intent-analyzer.md
+@agents/terminal-tester.md
 @agents/browser-tester.md
+@agents/report.md

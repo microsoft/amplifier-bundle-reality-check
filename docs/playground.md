@@ -54,12 +54,17 @@ Then drive the pipeline step by step:
    It needs an ANTHROPIC_API_KEY passthrough and should expose port 8410.
    ```
 
-3. **Browser Tester** -- run acceptance tests against the live environment.
+3. **Validators** -- run acceptance tests against the live environment.
+   The pipeline runs three validators sequentially; each exits immediately
+   if no tests of its type exist. For amplifier-chat, only browser tests apply.
 
    ```
    Run browser tests from ./acceptance-tests.yaml against the chat UI at
    http://127.0.0.1:8410/chat/. Save screenshots to ./screenshots/.
    ```
+
+   (For CLI/TUI software, the terminal-tester step would run instead.
+   For API services or libraries, the generic step handles them.)
 
 4. **Report** -- synthesize everything into a gap analysis.
 

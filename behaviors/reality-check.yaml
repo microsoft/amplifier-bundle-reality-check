@@ -10,7 +10,6 @@ includes:
 agents:
   include:
     - reality-check:intent-analyzer
-    - reality-check:validation-dispatcher
     - reality-check:browser-tester
     - reality-check:terminal-tester
     - reality-check:report

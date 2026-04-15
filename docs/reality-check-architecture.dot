@@ -37,14 +37,15 @@ digraph reality_check_architecture {
         intent -> criteria [label="produces"]
 
         subgraph cluster_validators {
-            label="Validators"
+            label="Validators (run sequentially, skip if no matching tests)"
             style="rounded,dashed"
             color="#999999"
             fontname="Helvetica"
             fontsize=9
 
-            browser_tester [label="Browser Tester\nagent", fillcolor="#c8e6c9"]
-            other_validators [label="Other validators\n(CLI, API, ...)", fillcolor="#c8e6c9", style="rounded,filled,dashed"]
+            terminal_tester [label="Terminal Tester\nagent\n(type: cli)", fillcolor="#c8e6c9"]
+            browser_tester [label="Browser Tester\nagent\n(type: browser)", fillcolor="#c8e6c9"]
+            generic_tester [label="Generic Tester\n(type: generic)\nAPI, library, etc.", fillcolor="#c8e6c9", style="rounded,filled,dashed"]
         }
 
         reporter [label="Report\nagent", fillcolor="#c8e6c9"]
@@ -77,17 +78,20 @@ digraph reality_check_architecture {
     // Software feeds DTU profile builder
     software -> profile_builder [label="builds profile\nfrom"]
 
-    // Criteria drives validation
+    // Criteria drives validation (sequential, each skips if no matching tests)
+    criteria -> terminal_tester
     criteria -> browser_tester
-    criteria -> other_validators
+    criteria -> generic_tester
 
     // DTU environment is what gets tested
+    dtu_env -> terminal_tester [label="tests against"]
     dtu_env -> browser_tester [label="tests against"]
-    dtu_env -> other_validators [label="tests against", style=dashed]
+    dtu_env -> generic_tester [label="tests against", style=dashed]
 
     // Validators feed reporter
+    terminal_tester -> reporter [label="results"]
     browser_tester -> reporter [label="results"]
-    other_validators -> reporter [label="results", style=dashed]
+    generic_tester -> reporter [label="results", style=dashed]
 
     // Reporter produces outputs
     reporter -> report [label="produces"]
