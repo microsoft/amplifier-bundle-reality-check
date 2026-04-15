@@ -127,9 +127,9 @@ Determine what was built. This drives which validators handle the tests. You can
 | Type | Validator | Example |
 |------|-----------|---------|
 | Web app | `browser` | Chat UI, dashboard, admin panel |
-| CLI tool | `cli` | Command-line utility, build tool |
-| API service | `api` | REST/GraphQL endpoint |
-| Library | `cli` | Python package, npm module (test via import) |
+| CLI / TUI tool | `cli` | Command-line utility, TUI app, build tool |
+| API service | `generic` | REST/GraphQL endpoint |
+| Library | `generic` | Python package, npm module |
 
 ### 5. Write acceptance tests
 
@@ -190,6 +190,27 @@ tests:
       - action: "Click send without typing anything"
         expect: "No crash, either a validation message or no-op"
 
+  - description: "CLI tool is installed and shows help"
+    type: cli
+    priority: must
+    steps:
+      - action: "Run 'mytool --help'"
+        expect: "Help text with usage instructions is displayed"
+
+  - description: "CLI processes a basic command"
+    type: cli
+    priority: must
+    steps:
+      - action: "Run 'mytool run hello'"
+        expect: "Output contains a response within 30 seconds"
+
+  - description: "API returns version info"
+    type: generic
+    priority: must
+    steps:
+      - action: "Send GET request to /api/version"
+        expect: "Response contains a version string"
+
 assumptions:
   - "Port 8080 assumed from project defaults — spec didn't specify"
   - "Single-user usage assumed — no auth flow tested"
@@ -201,7 +222,7 @@ assumptions:
 - `should` tests are reasonable expectations not explicitly stated
 - `nice` tests are stretch goals or edge cases
 - Don't write tests that can't be verified by the available validator types
-  (`browser`, `cli`, `api`)
+  (`browser`, `cli`, `generic`)
 - Fewer good tests beat many shallow ones — aim for 3-8 tests total
 - Steps must be concrete: "Navigate to /login" not "verify auth works"
 - Include `entry_points` so validators know where to point

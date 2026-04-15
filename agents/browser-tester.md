@@ -70,10 +70,15 @@ Do NOT skip this check. If the tool is missing, everything downstream fails.
 
 ## Acceptance Test Coverage (CRITICAL)
 
-When you receive an acceptance tests file, you MUST test **every single
-browser-type criterion** in it. Do not stop after a few checks. Do not
-summarize untested criteria as "likely works." Every test gets an explicit
-PASS, FAIL, or ERROR.
+When you receive an acceptance tests file, first read it and count how many
+tests have `type: browser`. **If there are zero browser-type tests, respond
+with "No browser tests found. Skipping." and stop immediately.** Do not run
+prerequisites, do not open a browser, do not take screenshots.
+
+If there ARE browser-type tests, you MUST test **every single browser-type
+criterion**. Do not stop after a few checks. Do not summarize untested
+criteria as "likely works." Every test gets an explicit PASS, FAIL, or
+ERROR.
 
 **Before you start interacting with the browser**, read the full acceptance
 tests file and build a checklist of every test you need to run. Use the todo

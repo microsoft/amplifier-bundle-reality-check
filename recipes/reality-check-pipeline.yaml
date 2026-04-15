@@ -67,15 +67,14 @@ steps:
     timeout: 1800
 
   # ------------------------------------------------------------------
-  # 3. Validation
-  #    Reads acceptance tests, determines which types exist (browser,
-  #    cli), and dispatches only the relevant validator agents.
-  #    Returns combined results with labeled blocks.
+  # 3a. Terminal Validation
+  #     Runs cli-type acceptance tests via terminal_inspector inside
+  #     the DTU. Exits immediately if no cli tests exist.
   # ------------------------------------------------------------------
-  - id: validation
-    agent: "reality-check:validation-dispatcher"
+  - id: terminal-validation
+    agent: "reality-check:terminal-tester"
     prompt: |
-      Run validators against the deployed application.
+      Run terminal tests against the deployed application.
 
       Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
       Screenshot directory: {{output_dir}}/screenshots/
@@ -83,14 +82,70 @@ steps:
       The DTU environment was launched with these details:
       {{dtu_result}}
 
-      Read the acceptance tests, determine which test types exist, and
-      dispatch only the matching validator agents:
-      - type: browser  -> delegate to reality-check:browser-tester
-      - type: cli      -> delegate to reality-check:terminal-tester
+      Read the acceptance tests file. If there are NO tests with
+      type: cli, respond with "No cli tests found. Skipping." and stop.
 
-      Return combined results as labeled blocks.
-    output: "validation_results"
+      Otherwise, run every cli-type test using the DTU bridge pattern
+      (amplifier-digital-twin exec <id> without --).
+    output: "terminal_results"
     timeout: 1800
+
+  # ------------------------------------------------------------------
+  # 3b. Browser Validation
+  #     Runs browser-type acceptance tests via agent-browser against
+  #     the DTU. Exits immediately if no browser tests exist.
+  # ------------------------------------------------------------------
+  - id: browser-validation
+    agent: "reality-check:browser-tester"
+    prompt: |
+      Run browser tests against the deployed application.
+
+      Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
+      Screenshot directory: {{output_dir}}/screenshots/
+
+      The DTU environment was launched with these details:
+      {{dtu_result}}
+
+      Read the acceptance tests file. If there are NO tests with
+      type: browser, respond with "No browser tests found. Skipping." and stop.
+
+      Otherwise, extract the access URL from the DTU details and run
+      every browser-type test from the acceptance tests file against it.
+    output: "browser_results"
+    timeout: 1800
+
+  # ------------------------------------------------------------------
+  # 3c. Generic Validation
+  #     Handles generic-type acceptance tests (API services, libraries,
+  #     etc.) that don't have a specialized validator. Uses bash/curl
+  #     and general tools inside the DTU. Exits immediately if no
+  #     generic tests exist.
+  # ------------------------------------------------------------------
+  - id: generic-validation
+    agent: "self"
+    prompt: |
+      Run generic acceptance tests against the deployed application.
+
+      Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
+      Screenshot directory: {{output_dir}}/screenshots/
+
+      The DTU environment was launched with these details:
+      {{dtu_result}}
+
+      Read the acceptance tests file. If there are NO tests with
+      type: generic, respond with "No generic tests found. Skipping." and stop.
+
+      Otherwise, for each generic-type test, execute the steps inside the
+      DTU using `amplifier-digital-twin exec <id> -- <command>`. Use curl
+      for HTTP requests, bash for general commands, etc. 
+      Report each test as PASS, FAIL, or ERROR with evidence.
+
+      Return results in this format:
+      | ID | Test | Status | Evidence |
+      |----|------|--------|----------|
+      | generic-01 | ... | PASS/FAIL/ERROR | ... |
+    output: "generic_results"
+    timeout: 900
 
   # ------------------------------------------------------------------
   # 4. Report
@@ -105,7 +160,17 @@ steps:
       acceptance_tests_path: {{output_dir}}/acceptance-tests.yaml
       output_dir: {{output_dir}}/report/
 
-      {{validation_results}}
+      --- terminal-tester results ---
+      {{terminal_results}}
+      --- end terminal-tester results ---
+
+      --- browser-tester results ---
+      {{browser_results}}
+      --- end browser-tester results ---
+
+      --- generic-tester results ---
+      {{generic_results}}
+      --- end generic-tester results ---
 
       After writing the report, include the DTU environment details so the
       user can interact with the deployed software themselves:
