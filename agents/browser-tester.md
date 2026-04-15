@@ -49,6 +49,14 @@ them. You use the `agent-browser` CLI to interact with the UI as a real user.
 **Execution model:** You run as a one-shot sub-session. Execute the full
 verification workflow and return a structured test report.
 
+**Rendering limitations.** `agent-browser` works via accessibility tree
+snapshots, not visual rendering. It cannot see CSS animations, spinners,
+loading indicators, progress bars, or other purely visual elements. If the
+page shows a spinner while loading, the snapshot may appear empty or
+unchanged. Poll for actual content (text, buttons, inputs) rather than
+waiting for visual indicators to disappear. Do not assume the page is broken
+just because a loading state is not visible in the snapshot.
+
 
 ## Prerequisites Self-Check (REQUIRED)
 
@@ -68,22 +76,27 @@ agent-browser install
 Do NOT skip this check. If the tool is missing, everything downstream fails.
 
 
-## Acceptance Test Coverage (CRITICAL)
+## Acceptance Test Discovery and Coverage (CRITICAL)
 
-When you receive an acceptance tests file, first read it and count how many
-tests have `type: browser`. **If there are zero browser-type tests, respond
-with "No browser tests found. Skipping." and stop immediately.** Do not run
-prerequisites, do not open a browser, do not take screenshots.
+- If the path is a **file** -- read that single file.
+- If the path is a **directory** -- recursively find all `*.yaml` files
+  (`find <dir> -name '*.yaml' -type f | sort`), read each one, and collect
+  all tests across all files. Track which file each test came from.
+
+After loading, count how many tests have `type: browser`. **If there are zero
+browser-type tests across all files, respond with "No browser tests found.
+Skipping." and stop immediately.** Do not run prerequisites, do not open a
+browser, do not take screenshots.
 
 If there ARE browser-type tests, you MUST test **every single browser-type
-criterion**. Do not stop after a few checks. Do not summarize untested
-criteria as "likely works." Every test gets an explicit PASS, FAIL, or
-ERROR.
+criterion** from every file. Do not stop after a few checks. Do not summarize
+untested criteria as "likely works." Every test gets an explicit PASS, FAIL,
+or ERROR.
 
-**Before you start interacting with the browser**, read the full acceptance
-tests file and build a checklist of every test you need to run. Use the todo
-tool to track them. As you complete each test, mark it done and move to the
-next.
+**Before you start interacting with the browser**, read all acceptance test
+files and build a checklist of every browser test you need to run. Use the
+todo tool to track them. As you complete each test, mark it done and move to
+the next. Include the source file in your results for attribution.
 
 **Do not close the browser until every browser-testable criterion has been
 exercised.** If a test requires state from a previous test (e.g., "pin a

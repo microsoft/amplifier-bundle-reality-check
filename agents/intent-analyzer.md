@@ -20,8 +20,10 @@ meta:
     **Calling convention:** Pass `context_depth="all"` so the agent receives the
     full conversation history -- that's its primary input for understanding user
     intent. The instruction MUST include an `output_path` telling the agent where
-    to write the acceptance tests YAML file. Optionally include file paths, repo
-    URLs, or a spec file for the agent to explore.
+    to write acceptance tests. The output_path can be a single YAML file or a
+    directory -- the agent decides the structure based on input complexity.
+    Optionally include file paths, repo URLs, or a spec file/directory for the
+    agent to explore.
 
     <example>
     Context: A resolver built a web app and needs to verify it
@@ -29,12 +31,13 @@ meta:
     assistant: |
       delegate(
           agent="reality-check:intent-analyzer",
-          instruction="Analyze user intent and produce acceptance tests. Output path: /tmp/acceptance-tests.yaml. The project repo is at ~/projects/my-chat-app.",
+          instruction="Analyze user intent and produce acceptance tests. Output path: /tmp/acceptance-tests/. The project repo is at ~/projects/my-chat-app.",
           context_depth="all",
           context_scope="agents",
       )
     <commentary>
-    Passes output path, full conversation history, and a repo path hint.
+    Passes output path (directory), full conversation history, and a repo path hint.
+    The agent decides whether to write a single file or organized directory structure.
     </commentary>
     </example>
 
@@ -44,12 +47,28 @@ meta:
     assistant: |
       delegate(
           agent="reality-check:intent-analyzer",
-          instruction="Analyze user intent and produce acceptance tests. Output path: .amplifier/reality-check/acceptance-tests.yaml",
+          instruction="Analyze user intent and produce acceptance tests. Output path: .amplifier/reality-check/acceptance-tests/",
           context_depth="all",
           context_scope="agents",
       )
     <commentary>
     No file paths yet -- the agent derives tests purely from conversation history and flags unknowns as assumptions.
+    </commentary>
+    </example>
+
+    <example>
+    Context: Project has specs organized in directories
+    user: 'Generate acceptance tests from the specs in specs/features/'
+    assistant: |
+      delegate(
+          agent="reality-check:intent-analyzer",
+          instruction="Analyze user intent and produce acceptance tests. Output path: /tmp/acceptance-tests/. Spec directory: ~/projects/my-app/specs/features/",
+          context_depth="all",
+          context_scope="agents",
+      )
+    <commentary>
+    Spec input is a directory. The agent discovers all spec files recursively and
+    mirrors the directory structure in the output.
     </commentary>
     </example>
 model_role: [reasoning, general]
@@ -69,8 +88,9 @@ acceptance tests.
 
 Check your delegation instruction for:
 
-- **Output path** (required) -- where to write the acceptance tests YAML file.
-  If missing, stop and say so.
+- **Output path** (required) -- where to write acceptance tests. This can be
+  used as a single YAML file path or a directory. You decide the structure
+  based on input complexity (see Output section). If missing, stop and say so.
 - **Conversation history** -- your primary input. Should be available via
   context inheritance. Read it to understand what was requested, discussed,
   decided, and clarified.
@@ -143,6 +163,13 @@ Steps should be specific enough that a validator agent can execute them
 without needing additional context. "Click the send button" is good.
 "Verify the app works" is not.
 
+**Validator rendering limitations.** Browser and terminal validators cannot
+see purely visual elements like CSS animations, spinners, loading indicators,
+or progress bars. Write test expectations against actual content (text,
+buttons, inputs, command output) rather than visual states. For example,
+"Page shows a list of items" is verifiable; "Loading spinner disappears" is
+not.
+
 ### 6. Note assumptions
 
 If you inferred something that wasn't explicitly stated, call it out.
@@ -151,11 +178,33 @@ This lets the orchestrator or user correct you before validators run.
 
 ## Output
 
-Write the acceptance tests as a YAML file to the output path from your
-delegation instruction. Then return the file path in your response so the
-caller knows where to find it.
+Write acceptance tests to the output path from your delegation instruction.
+Then return the path(s) in your response so the caller knows where to find them.
 
-The YAML file should have this structure:
+**The output path can be used as either a single YAML file or a directory.**
+You decide based on input complexity:
+
+- **Simple input** (single spec, short conversation, small project) -- write a
+  single YAML file directly to the output path (e.g., `output_path/tests.yaml`
+  or use the path as-is if it ends in `.yaml`).
+- **Complex input** (multiple spec files, specs organized in directories, large
+  project with many modules) -- create a directory structure under the output
+  path that mirrors the input organization. Write one YAML file per spec/feature
+  area. Each file is independently valid and follows the same schema.
+
+Example directory output for a project with specs organized by module:
+```
+acceptance-tests/
+  auth/
+    login.yaml
+    signup.yaml
+  api/
+    endpoints.yaml
+  ui/
+    dashboard.yaml
+```
+
+Each YAML file should have this structure:
 
 ```yaml
 summary: "One sentence: what the user wanted built"
@@ -223,7 +272,7 @@ assumptions:
 - `nice` tests are stretch goals or edge cases
 - Don't write tests that can't be verified by the available validator types
   (`browser`, `cli`, `generic`)
-- Fewer good tests beat many shallow ones — aim for 3-8 tests total
+- Fewer good tests beat many shallow ones. For complex multi-file output, each file should be focused and manageable.
 - Steps must be concrete: "Navigate to /login" not "verify auth works"
 - Include `entry_points` so validators know where to point
 
@@ -238,7 +287,9 @@ Before returning, verify:
 - [ ] Each test has at least one step with a concrete action and expectation
 - [ ] Assumptions are listed for anything you inferred
 - [ ] Tests are ordered: `must` first, then `should`, then `nice`
-- [ ] Total test count is between 3 and 8 (unless the spec is very large)
+- [ ] Each YAML file has 3-8 tests (scale with complexity)
+- [ ] If using directory output, the structure mirrors the input organization
+- [ ] Every YAML file is independently valid (has summary, software_type, tests)
 
 
 @foundation:context/shared/common-agent-base.md

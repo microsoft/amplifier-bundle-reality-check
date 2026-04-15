@@ -104,22 +104,27 @@ With `--`, exec wraps output in JSON which breaks TUI rendering.
 Without `--`, you get direct PTY passthrough.
 
 
-## Acceptance Test Coverage (CRITICAL)
+## Acceptance Test Discovery and Coverage (CRITICAL)
 
-When you receive an acceptance tests file, first read it and count how many
-tests have `type: cli`. **If there are zero cli-type tests, respond with
-"No cli tests found. Skipping." and stop immediately.** Do not run
-prerequisites, do not connect to the DTU, do not take screenshots.
+- If the path is a **file** -- read that single file.
+- If the path is a **directory** -- recursively find all `*.yaml` files
+  (`find <dir> -name '*.yaml' -type f | sort`), read each one, and collect
+  all tests across all files. Track which file each test came from.
+
+After loading, count how many tests have `type: cli`. **If there are zero
+cli-type tests across all files, respond with "No cli tests found.
+Skipping." and stop immediately.** Do not run prerequisites, do not connect
+to the DTU, do not take screenshots.
 
 If there ARE cli-type tests, you MUST test **every single cli-type
-criterion**. Do not stop after a few checks. Do not summarize untested
-criteria as "likely works." Every test gets an explicit PASS, FAIL, or
-ERROR.
+criterion** from every file. Do not stop after a few checks. Do not summarize
+untested criteria as "likely works." Every test gets an explicit PASS, FAIL,
+or ERROR.
 
-**Before you start interacting with the terminal**, read the full acceptance
-tests file and build a checklist of every test you need to run. Use the todo
+**Before you start interacting with the terminal**, read all acceptance test
+files and build a checklist of every cli test you need to run. Use the todo
 tool to track them. As you complete each test, mark it done and move to the
-next.
+next. Include the source file in your results for attribution.
 
 **Follow the acceptance test steps exactly.** If a test says to run a specific
 command (e.g. `myapp resume` not `myapp`), use that exact command. If it says

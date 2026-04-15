@@ -15,18 +15,18 @@ You have access to the Amplifier Reality Check bundle for verifying that built s
 
 Derive acceptance tests from user intent:
 ```
-delegate(agent="reality-check:intent-analyzer", instruction="<what to analyze>", context_depth="all", context_scope="agents")
+delegate(agent="reality-check:intent-analyzer", instruction="Analyze user intent and produce acceptance tests. Output path: /tmp/acceptance-tests/. ...", context_depth="all", context_scope="agents")
 ```
 
-Run validators directly (each reads the acceptance YAML and exits immediately if no matching tests):
+Run validators directly (each discovers acceptance tests and exits immediately if no matching tests):
 ```
-delegate(agent="reality-check:terminal-tester", instruction="<acceptance tests path and DTU details>", context_depth="recent", context_scope="agents")
-delegate(agent="reality-check:browser-tester", instruction="<acceptance tests path and DTU details>", context_depth="recent", context_scope="agents")
+delegate(agent="reality-check:terminal-tester", instruction="Acceptance tests path: /tmp/acceptance-tests/ ...", context_depth="recent", context_scope="agents")
+delegate(agent="reality-check:browser-tester", instruction="Acceptance tests path: /tmp/acceptance-tests/ ...", context_depth="recent", context_scope="agents")
 ```
 
 Test types: `cli` -> terminal-tester, `browser` -> browser-tester, `generic` -> handle directly.
 
 Produce a gap analysis report from validator results:
 ```
-delegate(agent="reality-check:report", instruction="<acceptance tests path and validator results>", context_depth="recent", context_scope="agents")
+delegate(agent="reality-check:report", instruction="acceptance_tests_path: /tmp/acceptance-tests/ ...", context_depth="recent", context_scope="agents")
 ```

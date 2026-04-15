@@ -18,7 +18,8 @@ meta:
     - Identifying gaps between acceptance tests and actual validation
 
     **Calling convention:** The instruction MUST include:
-    - `acceptance_tests_path` — path to the YAML file from intent-analyzer
+    - `acceptance_tests_path` — path to acceptance tests from intent-analyzer.
+      This can be a single YAML file or a directory of YAML files.
     - `output_dir` — directory where report.yaml and report.html will be written
     - Validator results as labeled text blocks (see examples)
 
@@ -26,7 +27,7 @@ meta:
     results as a fallback for validator output.
 
     <example>
-    Context: Browser tester finished validating a web app
+    Context: Browser tester finished validating a web app (single file)
     user: 'Produce the reality check report'
     assistant: |
       delegate(
@@ -49,18 +50,18 @@ meta:
           context_scope="agents",
       )
     <commentary>
-    Passes acceptance tests path, output dir, and inlines the browser-tester results.
+    Single YAML file path. Works as before.
     </commentary>
     </example>
 
     <example>
-    Context: Multiple validators ran (browser + CLI)
+    Context: Multiple validators ran against directory-organized tests
     user: 'Generate the final report with all results'
     assistant: |
       delegate(
           agent="reality-check:report",
           instruction="""Produce the reality check report.
-      acceptance_tests_path: /workspace/acceptance-tests.yaml
+      acceptance_tests_path: /workspace/acceptance-tests/
       output_dir: /workspace/reality-check/
 
       --- browser-tester results ---
@@ -75,7 +76,7 @@ meta:
           context_scope="agents",
       )
     <commentary>
-    Multiple validator result blocks, each labeled with the validator name.
+    Directory path. The agent discovers all YAML files recursively and aggregates.
     </commentary>
     </example>
 model_role: [reasoning, writing, coding, general]
@@ -94,8 +95,9 @@ inputs, synthesize them, and write two output files.
 
 Check your delegation instruction for:
 
-- **acceptance_tests_path** (required) -- path to the YAML file produced by
-  intent-analyzer. If missing, stop and say so.
+- **acceptance_tests_path** (required) -- path to acceptance tests produced by
+  intent-analyzer. This can be a single YAML file or a directory containing
+  YAML files (possibly nested). If missing, stop and say so.
 - **output_dir** (required) -- directory where you write `report.yaml` and
   `report.html`. If missing, stop and say so.
 - **Validator results** (required) -- one or more labeled blocks of validator
@@ -109,11 +111,20 @@ Check your delegation instruction for:
 
 ### 1. Read the acceptance tests
 
-Load the YAML file at `acceptance_tests_path`. Extract:
+**The acceptance_tests_path can be either a single YAML file or a directory.**
+
+- If the path is a **file** -- load that single file.
+- If the path is a **directory** -- recursively find all `*.yaml` files
+  (`find <dir> -name '*.yaml' -type f | sort`), load each one.
+
+From each file, extract:
 - `summary`, `software_type`
 - `entry_points`
 - `tests` list (each with `description`, `type`, `priority`, `steps`)
 - `assumptions`
+
+When loading from a directory, merge all tests into one logical set for
+analysis but track which source file each test came from.
 
 ### 2. Parse validator results
 
@@ -160,12 +171,13 @@ Create `{output_dir}/report.yaml` with this structure:
 ```yaml
 summary: "One sentence from the acceptance tests"
 timestamp: "ISO 8601"
-acceptance_tests_source: "/path/to/acceptance-tests.yaml"
+acceptance_tests_source: "/path/to/acceptance-tests/"  # file path or directory
 
 verdict: pass | partial | fail
 
 results:
   - test: "Description from acceptance test"
+    source_file: "auth/login.yaml"
     priority: must
     validator: browser
     status: pass
@@ -173,6 +185,7 @@ results:
     screenshots: ["01-loaded.png"]
 
   - test: "Another test"
+    source_file: "ui/dashboard.yaml"
     priority: must
     validator: browser
     status: fail

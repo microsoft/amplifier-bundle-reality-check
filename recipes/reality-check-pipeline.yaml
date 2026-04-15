@@ -24,14 +24,16 @@ steps:
   # ------------------------------------------------------------------
   # 1. Intent Analysis
   #    Reads spec, conversation, and feedback files. Explores the software
-  #    to ground tests in real values. Produces acceptance-tests.yaml.
+  #    to ground tests in real values. Produces acceptance tests at
+  #    {{output_dir}}/acceptance-tests/ (can be a single file or a
+  #    directory structure depending on input complexity).
   # ------------------------------------------------------------------
   - id: intent-analysis
     agent: "reality-check:intent-analyzer"
     prompt: |
       Analyze user intent and produce acceptance tests.
 
-      Output path: {{output_dir}}/acceptance-tests.yaml
+      Output path: {{output_dir}}/acceptance-tests/
 
       Read these files to understand what the user wanted:
       - Spec / requirements: {{spec_path}}
@@ -42,6 +44,10 @@ steps:
       in real values (ports, routes, commands, entry points).
 
       Skip any file paths that are empty strings.
+
+      The output path is a directory. You may write a single YAML file
+      inside it or organize tests into a nested directory structure
+      mirroring the input specs -- your choice based on input complexity.
     output: "intent_result"
     timeout: 900
 
@@ -76,14 +82,18 @@ steps:
     prompt: |
       Run terminal tests against the deployed application.
 
-      Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
+      Acceptance tests path: {{output_dir}}/acceptance-tests/
       Screenshot directory: {{output_dir}}/screenshots/
 
       The DTU environment was launched with these details:
       {{dtu_result}}
 
-      Read the acceptance tests file. If there are NO tests with
-      type: cli, respond with "No cli tests found. Skipping." and stop.
+      The acceptance tests path can be a single YAML file or a directory
+      of YAML files. If it is a directory, recursively discover all
+      *.yaml files and collect tests from all of them.
+
+      If there are NO tests with type: cli across all files, respond
+      with "No cli tests found. Skipping." and stop.
 
       Otherwise, run every cli-type test using the DTU bridge pattern
       (amplifier-digital-twin exec <id> without --).
@@ -100,17 +110,21 @@ steps:
     prompt: |
       Run browser tests against the deployed application.
 
-      Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
+      Acceptance tests path: {{output_dir}}/acceptance-tests/
       Screenshot directory: {{output_dir}}/screenshots/
 
       The DTU environment was launched with these details:
       {{dtu_result}}
 
-      Read the acceptance tests file. If there are NO tests with
-      type: browser, respond with "No browser tests found. Skipping." and stop.
+      The acceptance tests path can be a single YAML file or a directory
+      of YAML files. If it is a directory, recursively discover all
+      *.yaml files and collect tests from all of them.
+
+      If there are NO tests with type: browser across all files, respond
+      with "No browser tests found. Skipping." and stop.
 
       Otherwise, extract the access URL from the DTU details and run
-      every browser-type test from the acceptance tests file against it.
+      every browser-type test against it.
     output: "browser_results"
     timeout: 1800
 
@@ -126,14 +140,18 @@ steps:
     prompt: |
       Run generic acceptance tests against the deployed application.
 
-      Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
+      Acceptance tests path: {{output_dir}}/acceptance-tests/
       Screenshot directory: {{output_dir}}/screenshots/
 
       The DTU environment was launched with these details:
       {{dtu_result}}
 
-      Read the acceptance tests file. If there are NO tests with
-      type: generic, respond with "No generic tests found. Skipping." and stop.
+      The acceptance tests path can be a single YAML file or a directory
+      of YAML files. If it is a directory, recursively discover all
+      *.yaml files and collect tests from all of them.
+
+      If there are NO tests with type: generic across all files, respond
+      with "No generic tests found. Skipping." and stop.
 
       Otherwise, for each generic-type test, execute the steps inside the
       DTU using `amplifier-digital-twin exec <id> -- <command>`. Use curl
@@ -157,7 +175,7 @@ steps:
     prompt: |
       Produce the reality check report.
 
-      acceptance_tests_path: {{output_dir}}/acceptance-tests.yaml
+      acceptance_tests_path: {{output_dir}}/acceptance-tests/
       output_dir: {{output_dir}}/report/
 
       --- terminal-tester results ---
