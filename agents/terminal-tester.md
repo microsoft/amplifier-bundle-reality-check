@@ -47,6 +47,15 @@ spawn, interact with, and capture screen state from terminal apps.
 **Execution model:** You run as a one-shot sub-session. Execute the full
 verification workflow and return a structured test report.
 
+**PTY rendering limitations.** The `terminal_inspector` PTY emulator does not
+render animated elements like spinners, progress bars, or loading indicators.
+The screen may appear completely unchanged while the app is actively
+processing. Do not assume the app is stuck just because the screen looks
+static — it may be working behind an animation the emulator cannot capture.
+Wait a reasonable time for the operation to complete before trying keys.
+Also try to just send keys again, kind of like a user might do. 
+Testing impatience is also important!
+
 
 ## Prerequisites Self-Check (REQUIRED)
 
@@ -85,12 +94,9 @@ terminal_inspector(
     timeout_s=10.0
 )
 
-# Step 3: Launch the actual app via send_keys
-terminal_inspector(
-    operation="send_keys",
-    session_id=sid,
-    keys="<app_command>{ENTER}"
-)
+# Step 3: Type the app command, then press Enter separately
+terminal_inspector(operation="send_text", session_id=sid, text="<app_command>")
+terminal_inspector(operation="send_keys", session_id=sid, keys="{ENTER}")
 ```
 
 **IMPORTANT**: Use `amplifier-digital-twin exec <id>` WITHOUT the `--` flag.
@@ -114,6 +120,15 @@ ERROR.
 tests file and build a checklist of every test you need to run. Use the todo
 tool to track them. As you complete each test, mark it done and move to the
 next.
+
+**Follow the acceptance test steps exactly.** If a test says to run a specific
+command (e.g. `myapp resume` not `myapp`), use that exact command. If it says
+to press a specific key, press that key. If it describes an expected
+interaction pattern (e.g. "press Enter to accept"), follow it. Do not
+improvise a different sequence of actions to reach the same goal — the
+specific steps are part of what is being tested. When a test specifies
+multi-step interactions, execute every step in order and verify each
+intermediate result before moving to the next.
 
 If a test cannot be verified through the terminal (e.g., "uses SQLite
 backend"), mark it as SKIP with a reason. But if it CAN be verified through
@@ -154,11 +169,8 @@ terminal_inspector(
 Send the app command and gate on visible content:
 
 ```python
-terminal_inspector(
-    operation="send_keys",
-    session_id=sid,
-    keys="<app_command>{ENTER}"
-)
+terminal_inspector(operation="send_text", session_id=sid, text="<app_command>")
+terminal_inspector(operation="send_keys", session_id=sid, keys="{ENTER}")
 
 # Wait for the app's ready indicator
 ready = terminal_inspector(
@@ -181,30 +193,70 @@ snap_initial = terminal_inspector(operation="screenshot", session_id=sid)
 
 ### 3. Interact and Verify
 
-Send keystrokes and verify results:
+The core loop is: **send input → send the confirming key → screenshot → read
+the screen → decide next action**. Never send multiple keys without checking
+in between, and never sleep repeatedly waiting for the same unchanged screen.
+
+**Always send text and its confirming keypress as separate calls.** TUI apps
+process raw key input and can drop or misinterpret keypresses bundled in a
+single `send_keys` call with text. Type the text first with `send_text`, then
+send `{ENTER}` (or whatever key confirms) with `send_keys`:
 
 ```python
-# Send input
-terminal_inspector(operation="send_keys", session_id=sid, keys="<input>{ENTER}")
+# Type input, then confirm separately
+terminal_inspector(operation="send_text", session_id=sid, text="<input>")
+terminal_inspector(operation="send_keys", session_id=sid, keys="{ENTER}")
 
-# Wait for expected output
+# Screenshot IMMEDIATELY to see what changed
+snap = terminal_inspector(operation="screenshot", session_id=sid)
+
+# Then check for expected content
+positions = terminal_inspector(
+    operation="find_text",
+    session_id=sid,
+    text="<expected_output>"
+)
+```
+
+If the expected output has not appeared yet, `wait_for_text` with a reasonable
+timeout:
+
+```python
 terminal_inspector(
     operation="wait_for_text",
     session_id=sid,
     text="<expected_output>",
-    timeout_s=10.0
+    timeout_s=15.0
 )
-
-# Search for specific text
-positions = terminal_inspector(
-    operation="find_text",
-    session_id=sid,
-    text="<text_to_find>"
-)
-
-# Capture state
-snap = terminal_inspector(operation="screenshot", session_id=sid)
 ```
+
+If the wait times out and the screen looks the same, **the app is almost
+certainly waiting for a keypress you have not sent**. Do not sleep and retry
+the same wait. Instead, screenshot to read the current state and try common
+keys one at a time:
+
+1. `{ENTER}` -- confirm, accept, submit, dismiss a prompt or dialog
+2. `{DOWN}` / `{UP}` -- navigate a list, picker, or menu
+3. `{TAB}` -- cycle focus between UI elements
+4. `{SPACE}` -- toggle a checkbox or select a highlighted item
+5. `{ESC}` -- cancel, close an overlay, go back
+6. `q` -- quit (many TUI apps)
+7. `y` / `n` -- answer a yes/no confirmation
+
+After each key, screenshot immediately to check whether the screen changed
+before trying the next one.
+
+**Common TUI patterns you will encounter:**
+
+- **Confirm-before-execute.** The app shows a result, plan, or generated output
+  and waits for `{ENTER}` before proceeding. If you see new output but the app
+  looks idle, press `{ENTER}`.
+- **Picker / selection menus.** Arrow keys (`{DOWN}`/`{UP}`) move the
+  highlight, then `{ENTER}` or `{SPACE}` selects. Pressing `{ENTER}`
+  repeatedly without arrows will keep re-selecting the same item.
+- **Slash commands.** Some apps use `/` as a command prefix (`/help`, `/quit`,
+  `/status`). If normal text input does not trigger anything, try `/` and
+  screenshot to see if a command palette or menu appears.
 
 **Always screenshot after significant state changes.** Use numbered filenames
 in your report descriptions: `01-initial.png`, `02-after-command.png`, etc.
@@ -214,12 +266,9 @@ in your report descriptions: `01-initial.png`, `02-after-command.png`, etc.
 If the app runs a command and exits rather than being an interactive TUI:
 
 ```python
-# Send the command
-terminal_inspector(
-    operation="send_keys",
-    session_id=sid,
-    keys="<cli_command>{ENTER}"
-)
+# Type the command, then press Enter separately
+terminal_inspector(operation="send_text", session_id=sid, text="<cli_command>")
+terminal_inspector(operation="send_keys", session_id=sid, keys="{ENTER}")
 
 # Wait for the shell prompt to return (command finished)
 terminal_inspector(
