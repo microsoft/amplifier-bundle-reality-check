@@ -1,14 +1,14 @@
 # End-to-end reality check pipeline.
 #
-# Required bundles: reality-check, digital-twin-universe
+# Required bundles: reality-check, digital-twin-universe, terminal-tester
 # Required CLIs:    amplifier-digital-twin, amplifier-gitea (if local repos),
-#                   agent-browser
+#                   agent-browser (for web apps), tmux (for terminal apps)
 
 name: reality-check-pipeline
 description: >
   Derives acceptance tests from user intent, deploys software in a Digital Twin
-  Universe environment, runs browser-based verification, and produces a gap
-  analysis report with an HTML artifact.
+  Universe environment, runs browser and/or terminal verification, and produces
+  a gap analysis report with an HTML artifact.
 version: 0.1.0
 author: dkoleczek
 
@@ -67,14 +67,15 @@ steps:
     timeout: 1800
 
   # ------------------------------------------------------------------
-  # 3. Browser Testing
-  #    Runs every browser-type acceptance test against the live DTU
-  #    environment. Saves screenshots.
+  # 3. Validation
+  #    Reads acceptance tests, determines which types exist (browser,
+  #    cli), and dispatches only the relevant validator agents.
+  #    Returns combined results with labeled blocks.
   # ------------------------------------------------------------------
-  - id: browser-testing
-    agent: "reality-check:browser-tester"
+  - id: validation
+    agent: "reality-check:validation-dispatcher"
     prompt: |
-      Run browser tests against the deployed application.
+      Run validators against the deployed application.
 
       Acceptance tests file: {{output_dir}}/acceptance-tests.yaml
       Screenshot directory: {{output_dir}}/screenshots/
@@ -82,10 +83,14 @@ steps:
       The DTU environment was launched with these details:
       {{dtu_result}}
 
-      Extract the access URL from the DTU details above and run every
-      browser-type test from the acceptance tests file against it.
-    output: "browser_results"
-    timeout: 1200
+      Read the acceptance tests, determine which test types exist, and
+      dispatch only the matching validator agents:
+      - type: browser  -> delegate to reality-check:browser-tester
+      - type: cli      -> delegate to reality-check:terminal-tester
+
+      Return combined results as labeled blocks.
+    output: "validation_results"
+    timeout: 1800
 
   # ------------------------------------------------------------------
   # 4. Report
@@ -100,9 +105,7 @@ steps:
       acceptance_tests_path: {{output_dir}}/acceptance-tests.yaml
       output_dir: {{output_dir}}/report/
 
-      --- browser-tester results ---
-      {{browser_results}}
-      --- end browser-tester results ---
+      {{validation_results}}
 
       After writing the report, include the DTU environment details so the
       user can interact with the deployed software themselves:

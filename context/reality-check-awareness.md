@@ -18,9 +18,15 @@ Derive acceptance tests from user intent:
 delegate(agent="reality-check:intent-analyzer", instruction="<what to analyze>", context_depth="all", context_scope="agents")
 ```
 
-Verify a web UI works via browser testing:
+Run validators (automatically dispatches to browser-tester, terminal-tester, or both based on test types):
+```
+delegate(agent="reality-check:validation-dispatcher", instruction="<acceptance tests path and DTU details>", context_depth="recent", context_scope="agents")
+```
+
+Or invoke individual validators directly:
 ```
 delegate(agent="reality-check:browser-tester", instruction="<what to verify>", context_depth="recent", context_scope="agents")
+delegate(agent="reality-check:terminal-tester", instruction="<what to verify>", context_depth="recent", context_scope="agents")
 ```
 
 Produce a gap analysis report from validator results:

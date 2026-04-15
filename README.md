@@ -20,6 +20,7 @@ See their READMEs for prerequisite setup:
 
 - [Digital Twin Universe prerequisites](https://github.com/microsoft/amplifier-bundle-digital-twin-universe#prerequisites)
 - [Gitea prerequisites](https://github.com/microsoft/amplifier-bundle-gitea#prerequisites)
+- [Terminal Tester prerequisites](https://github.com/microsoft/amplifier-bundle-terminal-tester#prerequisites) (for CLI/TUI validation)
 
 
 ## Installation
@@ -39,13 +40,15 @@ amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-reality-
 ## Agents
 
 - **[Intent Analyzer](agents/intent-analyzer.md)** -- reads user interactions (spec, conversation history, feedback) and produces structured acceptance tests. The "what does done mean?" agent.
+- **[Validation Dispatcher](agents/validation-dispatcher.md)** -- reads acceptance tests, determines which test types exist (browser, cli), and dispatches only the relevant validator agents. Returns combined results.
 - **[Browser Tester](agents/browser-tester.md)** -- drives a real browser against web UIs to verify they actually work end-to-end.
+- **[Terminal Tester](agents/terminal-tester.md)** -- drives terminal applications inside DTU environments to verify CLI/TUI apps work end-to-end. Uses the DTU exec bridge pattern with `terminal_inspector`.
 - **[Report](agents/report.md)** -- consumes acceptance tests and validator results, produces a structured gap analysis and a self-contained HTML report.
 
 
 ## Recipes
 
-- **[reality-check-pipeline](recipes/reality-check-pipeline.yaml)** -- runs the full pipeline end-to-end: derives acceptance tests from user intent, deploys the software in a Digital Twin Universe environment, runs browser-based verification, and produces a gap analysis report. The DTU environment is left running so the user can interact with the deployed software.
+- **[reality-check-pipeline](recipes/reality-check-pipeline.yaml)** -- runs the full pipeline end-to-end: derives acceptance tests from user intent, deploys the software in a Digital Twin Universe environment, dispatches the appropriate validators (browser, terminal, or both) based on test types, and produces a gap analysis report. The DTU environment is left running so the user can interact with the deployed software.
   - Sample prompt: 
   ```
   Run the reality-check-pipeline recipe against the software at ./my-app with spec at ./spec.md and conversation at ./conversation.json

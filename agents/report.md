@@ -99,7 +99,7 @@ Check your delegation instruction for:
 - **output_dir** (required) -- directory where you write `report.yaml` and
   `report.html`. If missing, stop and say so.
 - **Validator results** (required) -- one or more labeled blocks of validator
-  output (browser-tester, cli-tester, api-tester, etc.). These appear in the
+  output (browser-tester, terminal-tester, cli-tester, api-tester, etc.). These appear in the
   instruction text between `--- <name> results ---` and
   `--- end <name> results ---` markers. If no validator results are present,
   also check context for delegate results. If truly nothing, stop and say so.

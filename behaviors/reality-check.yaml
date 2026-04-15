@@ -5,11 +5,14 @@ bundle:
 
 includes:
   - bundle: git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe@main
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-terminal-tester@main
 
 agents:
   include:
     - reality-check:intent-analyzer
+    - reality-check:validation-dispatcher
     - reality-check:browser-tester
+    - reality-check:terminal-tester
     - reality-check:report
 
 context:
