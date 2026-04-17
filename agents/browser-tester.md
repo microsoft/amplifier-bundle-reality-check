@@ -66,14 +66,9 @@ Verify `agent-browser` is available:
 which agent-browser && agent-browser --version
 ```
 
-If `agent-browser` is missing:
-```bash
-npm install -g agent-browser
-agent-browser install
-# Linux: agent-browser install --with-deps
-```
-
-Do NOT skip this check. If the tool is missing, everything downstream fails.
+If `agent-browser` is missing, see the browser-guide context for installation
+instructions. Do NOT skip this check. If the tool is missing, everything
+downstream fails.
 
 
 ## Acceptance Test Discovery and Coverage (CRITICAL)
@@ -98,6 +93,13 @@ files and build a checklist of every browser test you need to run. Use the
 todo tool to track them. As you complete each test, mark it done and move to
 the next. Include the source file in your results for attribution.
 
+**Follow the acceptance test steps exactly.** If a test says to navigate to a
+specific URL, use that URL. If it says to fill a specific field or click a
+specific button, do that. Do not improvise a different sequence of actions to
+reach the same goal -- the specific steps are part of what is being tested.
+When a test specifies multi-step interactions, execute every step in order and
+verify each intermediate result before moving to the next.
+
 **Do not close the browser until every browser-testable criterion has been
 exercised.** If a test requires state from a previous test (e.g., "pin a
 session, then verify it persists after refresh"), chain them -- don't skip
@@ -114,140 +116,45 @@ acceptance criteria and test results.
 
 ## Core Workflow
 
-### 1. Open the Browser
+For the complete `agent-browser` command reference, snapshot mechanics, ref
+lifecycle, interaction patterns, and SPA handling, see the browser-guide
+context (@-mentioned below). This section covers only the acceptance-test-
+specific workflow.
 
-Use `127.0.0.1` instead of `localhost` for reliability (especially on WSL2):
+### 1. Open and Wait for Render
 
-```bash
-agent-browser open "http://127.0.0.1:<port><path>"
-```
+Use `127.0.0.1` instead of `localhost` for reliability (especially on WSL2).
+Web apps often show a loading screen before the real UI appears. Poll
+snapshots until interactive elements appear -- do NOT use a fixed sleep.
+Once the page renders, always take a screenshot.
 
-If the user wants to watch, add `--headed`:
-```bash
-agent-browser --headed open "http://127.0.0.1:<port><path>"
-```
+### 2. Execute Test Steps
 
-### 2. Wait for the Page to Render
+The core loop is: **snapshot -> identify refs -> interact -> re-snapshot ->
+verify expectations -> screenshot -> next step**. Always re-snapshot after
+any action -- refs become stale after state changes.
 
-Web apps often show a loading screen before the real UI appears. Poll snapshots
-until interactive elements appear -- do NOT use a fixed sleep:
+For each acceptance test:
+1. Execute the steps in order
+2. After each action, re-snapshot and check for expected content
+3. Screenshot at each significant state change
+4. Record PASS/FAIL/ERROR with evidence
 
-```bash
-for i in $(seq 1 20); do
-    sleep 3
-    SNAPSHOT=$(agent-browser snapshot -ic)
-    if echo "$SNAPSHOT" | grep -qiE "textbox|button.*[Ss]end|button.*[Ss]ubmit"; then
-        break
-    fi
-done
-```
+If expected content has not appeared, use `agent-browser wait --text` with
+a reasonable timeout before concluding the test failed.
 
-Once the page renders, **always take a screenshot**:
-```bash
-agent-browser screenshot 01-loaded.png
-```
+### 3. Clean Up
 
-### 3. Interact and Verify
-
-Use refs from the snapshot to interact with the UI:
-
-```bash
-agent-browser snapshot -ic          # Get refs (@e1, @e2, ...)
-agent-browser fill @e16 "hello"     # Fill an input
-agent-browser click @e18            # Click a button
-```
-
-**Always re-snapshot after any action** -- refs become stale after state changes.
-
-**Always screenshot after significant state changes** -- before interaction,
-after form submission, after receiving a response. Use numbered filenames:
-```bash
-agent-browser screenshot 01-loaded.png
-agent-browser screenshot 02-filled.png
-agent-browser screenshot 03-response.png
-```
-
-### 4. Clean Up
-
-```bash
-agent-browser close
-```
-
-
-## Snapshot Reference
-
-`agent-browser snapshot -ic` returns an accessibility tree with element refs:
-
-```
-- heading "Welcome" [ref=e1]
-- textbox "Email" [ref=e2]
-- textbox "Password" [ref=e3]
-- button "Sign in" [ref=e4]
-```
-
-- `-i` = interactive elements only (clickable, fillable)
-- `-c` = compact (skip empty structural nodes)
-- Refs use the format `ref=e16` in the snapshot; use `@e16` in commands
-- Refs are stable for the current page state only
-- Always re-snapshot after navigation, clicks, or form submissions
-
-
-## agent-browser Commands Quick Reference
-
-```bash
-# Navigation
-agent-browser open <url>                  # Navigate to URL
-agent-browser open <url> --headed         # Visible browser window
-agent-browser close                       # Close session
-
-# Page state
-agent-browser snapshot -ic                # Accessibility tree (compact, interactive)
-agent-browser screenshot <file.png>       # Viewport screenshot
-agent-browser screenshot <file.png> --full # Full-page screenshot
-agent-browser errors --json               # Console errors
-
-# Interaction (use refs from snapshot)
-agent-browser fill @e5 "value"            # Fill input field
-agent-browser click @e3                   # Click element
-agent-browser press Enter                 # Press key
-agent-browser type @e5 "text"             # Type char by char
-agent-browser select @e7 "option"         # Select dropdown
-agent-browser scroll down                 # Scroll page
-
-# Data extraction
-agent-browser get text @e1                # Text content
-agent-browser get value @e1               # Input value
-agent-browser get url                     # Current URL
-agent-browser get title                   # Page title
-
-# State checks
-agent-browser is visible @e1              # Boolean
-agent-browser is enabled @e1              # Boolean
-
-# Waiting
-agent-browser wait 2000                   # Wait ms
-agent-browser wait --text "text"          # Wait for text
-agent-browser wait --load networkidle     # Wait for network
-```
-
-
-## Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| `ERR_CONNECTION_REFUSED` | Use `127.0.0.1` not `localhost`. Check the app is running. |
-| Empty snapshot | Page not hydrated yet. Wait longer, re-snapshot. Check `agent-browser errors --json` |
-| `Element not found: @e5` | Refs are stale. Re-run `agent-browser snapshot -ic` for fresh refs |
-| Chromium won't launch | Run `agent-browser install --with-deps` (Linux system libraries) |
-| Page loads but no interactive elements | The app may need credentials or have an onboarding flow. Check the snapshot for what IS there |
+Always close the browser session when done, even if something went wrong.
 
 
 ## Failure Budget
 
-If a page fails to load after 3 attempts, stop and report:
-1. Normal `agent-browser open <url>`
-2. With `--wait-until domcontentloaded`
-3. Diagnostic: `agent-browser open <url>` then `agent-browser get url`
+You get **3 attempts** on any single page load before you must stop and report:
+
+1. First attempt: normal open
+2. Second attempt: with `--wait-until domcontentloaded`
+3. Third attempt: diagnostic -- open then `agent-browser get url`
 
 After 3 failures, report the issue and stop.
 
@@ -299,4 +206,6 @@ Screenshots captured:
 5. A **coverage summary**: X tested / Y total, Z skipped (with reasons)
 
 
+@browser-tester:context/browser-guide.md
+@browser-tester:docs/TROUBLESHOOTING.md
 @foundation:context/shared/common-agent-base.md

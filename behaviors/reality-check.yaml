@@ -4,6 +4,7 @@ bundle:
   description: Verifies built software matches user intent through environment testing and completion verification
 
 includes:
+  - bundle: git+https://github.com/microsoft/amplifier-bundle-browser-tester@main
   - bundle: git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe@main
   - bundle: git+https://github.com/microsoft/amplifier-bundle-terminal-tester@main
 
