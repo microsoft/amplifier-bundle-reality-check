@@ -53,6 +53,10 @@ amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-reality-
   Run the reality-check-pipeline recipe against the software at ./my-app with spec at ./spec.md and conversation at ./conversation.json
   ```
 
+## Development
+
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
 ## Contributing
 
 > [!NOTE]

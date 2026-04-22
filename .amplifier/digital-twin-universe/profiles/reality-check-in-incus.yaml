@@ -1,0 +1,310 @@
+# Profile for validating the Reality Check bundle, within a Digital Twin Universe.
+#
+# Installs the full reality-check stack:
+#   1. Incus                                -- inner container runtime
+#   2. Docker Engine                        -- inner Gitea + mock sidecars
+#   3. uv + Amplifier CLI                   -- interactive Amplifier sessions
+#   4. amplifier-digital-twin CLI           -- drive inner Incus
+#   5. amplifier-gitea CLI                  -- drive inner Docker Gitea
+#   6. Node.js + agent-browser + Chromium   -- browser-tester runtime deps
+#   7. reality-check bundle (transitively:
+#      digital-twin-universe, gitea,
+#      browser-tester, terminal-tester)
+#   8. Pre-staged e2e playground at /root/home
+#      (amplifier-chat source + synthetic
+#      spec + conversation fixtures). Named
+#      /root/home deliberately so the
+#      artifact does not signal "I am being
+#      tested" to agents exploring it.
+#
+# After launch, the DTU can itself launch inner DTUs (DTU-in-DTU), run the
+# reality-check pipeline against amplifier-chat, and drive browser validation
+# from inside the outer DTU.
+#
+# Usage:
+#   # Launch without Gitea (pulls reality-check bundle from GitHub):
+#   amplifier-digital-twin launch reality-check-in-incus
+#
+#   # Launch with a local Gitea override (pulls reality-check from Gitea):
+#   amplifier-digital-twin launch reality-check-in-incus \
+#     --var GITEA_URL=http://localhost:10110 \
+#     --var GITEA_TOKEN=<token>
+#
+# Variables (optional):
+#   GITEA_URL   -- Gitea base URL. If set with GITEA_TOKEN, reality-check
+#                  clones are redirected through the proxy; otherwise
+#                  url_rewrites are silently skipped (rules carry
+#                  unresolved vars) and GitHub is used directly.
+#   GITEA_TOKEN -- Gitea API token paired with GITEA_URL.
+#
+# Notes:
+#   - Only the reality-check bundle is rewritten. Its transitive deps
+#     (DTU, gitea, browser-tester, terminal-tester) still pull from
+#     GitHub. This keeps the rewrite surface minimal while iterating
+#     on reality-check itself.
+#   - Docker and Incus coexist via different bridges (docker0, incusbr0)
+#     and different cgroups. No iptables tweaks required on WSL2.
+#   - Both daemons run under the container's systemd. Manual
+#     `dockerd &` / `incusd &` start would race the auto-started
+#     socket units and cause init commands to hang.
+#   - uv tool install places binaries in /root/.local/bin; uv's
+#     installer appends that to ~/.profile so subsequent bash -lc
+#     (login-shell) setup_cmds and exec invocations pick it up.
+#   - `agent-browser install --with-deps` pulls Chromium (~300MB) and
+#     Linux system libraries. Provisioning takes noticeably longer
+#     than the plain dtu-host-in-incus profile.
+name: reality-check-in-incus
+description: >
+  DTU environment with Incus + Docker + Amplifier CLI + reality-check
+  bundle (transitively pulls DTU, gitea, browser-tester, terminal-tester)
+  + agent-browser/Chromium + pre-staged reality-check e2e playground.
+  Suitable for running the full reality-check pipeline from within a DTU.
+
+base:
+  image: ubuntu:24.04
+  config:
+    security.nesting: "true"
+
+# Forward the inner amplifier-chat DTU's 8410 up to the host.
+# The inner DTU binds 8410 to the outer DTU's localhost via Incus proxy,
+# and this access.ports block forwards it from the outer DTU to the host.
+#
+# host uses ${HOST_PORT} so two concurrent instances of this profile
+# can coexist without fighting over the same TCP port. Pass the value
+# via `amplifier-digital-twin launch ... --var HOST_PORT=8410`. The
+# wrapper script (scripts/run-reality-check-validation.sh) always
+# passes it; direct CLI launches must supply it explicitly, otherwise
+# the unresolved `${HOST_PORT}` literal will fail schema validation.
+#
+# verify: false -- this is a pass-through forwarding. The outer DTU itself
+# does not host a service on 8410; nothing listens there until the user
+# launches the inner amplifier-chat DTU. Host-side verification would
+# otherwise always fail and block readiness.
+access:
+  ports:
+    - host: ${HOST_PORT}
+      container: 8410
+      label: Inner Chat UI
+      path: /chat/
+      verify: false
+
+# Redirect reality-check bundle clones through a local Gitea when
+# GITEA_URL / GITEA_TOKEN are provided. Without them, rules carry
+# unresolved variables and the engine silently skips proxy setup,
+# so clones fall through to GitHub.
+url_rewrites:
+  auth:
+    username: admin
+    token_var: GITEA_TOKEN
+  rules:
+    - match: github.com/microsoft/amplifier-bundle-reality-check
+      target: ${GITEA_URL}/admin/amplifier-bundle-reality-check
+
+passthrough:
+  allow_external: true
+  services:
+    - name: anthropic
+      key_env: ANTHROPIC_API_KEY
+
+provision:
+  setup_cmds:
+    # Common prereqs for the apt repo setups.
+    - |
+      set -euo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+      timeout 180 apt-get update
+      timeout 300 apt-get install -y ca-certificates curl gnupg git
+
+    # --- Incus via Zabbly stable repo (noble = Ubuntu 24.04) ----------
+    - |
+      set -euo pipefail
+      install -m 0755 -d /etc/apt/keyrings
+      timeout 30 curl -fsSL --max-time 20 \
+        https://pkgs.zabbly.com/key.asc \
+        -o /etc/apt/keyrings/zabbly.asc
+      chmod a+r /etc/apt/keyrings/zabbly.asc
+      ARCH=$(dpkg --print-architecture)
+      cat > /etc/apt/sources.list.d/zabbly-incus-stable.sources <<EOF
+      Enabled: yes
+      Types: deb
+      URIs: https://pkgs.zabbly.com/incus/stable
+      Suites: noble
+      Components: main
+      Architectures: ${ARCH}
+      Signed-By: /etc/apt/keyrings/zabbly.asc
+      EOF
+
+    # --- Docker CE apt repo -------------------------------------------
+    - |
+      set -euo pipefail
+      timeout 30 curl -fsSL --max-time 20 \
+        https://download.docker.com/linux/ubuntu/gpg \
+        -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      ARCH=$(dpkg --print-architecture)
+      CODENAME=$(. /etc/os-release && echo "${VERSION_CODENAME}")
+      echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${CODENAME} stable" \
+        > /etc/apt/sources.list.d/docker.list
+
+    # --- Install Incus + Docker + Node.js in a single apt transaction -
+    # Ubuntu 24.04's default nodejs package is 18.x, which satisfies
+    # agent-browser's Node 18+ requirement. If this drifts below 18,
+    # swap to NodeSource.
+    - |
+      set -euo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+      timeout 180 apt-get update
+      timeout 600 apt-get install -y \
+        incus incus-base incus-client \
+        docker-ce docker-ce-cli containerd.io \
+        nodejs npm
+
+    # --- Ensure both daemons are up via systemd -----------------------
+    - |
+      set -euo pipefail
+      if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+        timeout 30 systemctl enable --now incus.socket incus.service
+        timeout 30 systemctl enable --now docker.service
+      else
+        nohup incusd  >/var/log/incusd.log  2>&1 &
+        nohup dockerd >/var/log/dockerd.log 2>&1 &
+      fi
+      for i in $(seq 1 60); do
+        [ -S /var/lib/incus/unix.socket ] && [ -S /var/run/docker.sock ] && break
+        sleep 1
+      done
+      if [ ! -S /var/lib/incus/unix.socket ]; then
+        echo "ERROR: Incus socket missing at /var/lib/incus/unix.socket"
+        (journalctl -u incus --no-pager -n 100 2>/dev/null) || true
+        exit 1
+      fi
+      if [ ! -S /var/run/docker.sock ]; then
+        echo "ERROR: Docker socket missing at /var/run/docker.sock"
+        (journalctl -u docker --no-pager -n 100 2>/dev/null) || true
+        exit 1
+      fi
+      echo "Both sockets up after ${i}s"
+
+    # --- Inner Incus: minimal init + privileged default profile -------
+    - timeout 60 incus admin init --minimal
+    - timeout 15 incus profile set default security.privileged=true
+
+    # --- Install uv (adds ~/.local/bin to ~/.profile) -----------------
+    - |
+      set -euo pipefail
+      timeout 60 curl -LsSf --max-time 45 https://astral.sh/uv/install.sh | sh
+
+    # --- Install Amplifier + DTU + Gitea CLIs -------------------------
+    # Each uv tool install creates an isolated venv; binaries end up in
+    # /root/.local/bin. Login-shell PATH picks them up for subsequent
+    # setup_cmds and exec invocations.
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      timeout 120 uv tool install git+https://github.com/microsoft/amplifier
+      timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe
+      timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea
+
+    # --- Install agent-browser + Chromium -----------------------------
+    # agent-browser is the browser automation CLI used by the
+    # browser-tester agent. `install --with-deps` downloads Chromium
+    # (~300MB) and installs Linux system libraries.
+    - |
+      set -euo pipefail
+      timeout 120 npm install -g agent-browser
+      timeout 600 agent-browser install --with-deps
+
+    # --- Amplifier provider config (anthropic passthrough) ------------
+    - |
+      set -euo pipefail
+      mkdir -p /root/.amplifier
+      cat > /root/.amplifier/settings.yaml <<EOF
+      config:
+        # Disable CLI-injected notifications. amplifier-app-cli injects
+        # amplifier-bundle-notify into the root session's bundle and
+        # adds a hooks-notify module override. That override cascades
+        # into recipe sub-sessions (intent-analyzer, etc.), but the
+        # bundle composition does not -- so sub-sessions fail to load
+        # hooks-notify because the module isn't in their prepared
+        # bundle. Inside a DTU there is no user-facing terminal to
+        # notify anyway, so we disable the whole subsystem here.
+        notifications: {}
+        providers:
+          - module: provider-anthropic
+            source: git+https://github.com/microsoft/amplifier-module-provider-anthropic@main
+            config:
+              api_key: ${ANTHROPIC_API_KEY:-}
+              # Default model for the ROOT amplifier session. Routing
+              # (amplifier routing use anthropic) governs delegated
+              # agents; this only affects the interactive main chat.
+              default_model: claude-opus-4-7
+      EOF
+
+    # --- Compose reality-check bundle (transitively pulls DTU,
+    #     gitea, browser-tester, terminal-tester via its behavior) ----
+    # The url_rewrite above redirects reality-check to Gitea when
+    # GITEA_URL/GITEA_TOKEN are set. Its sub-bundles still come from
+    # GitHub.
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      timeout 300 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-reality-check@main --app
+
+    # --- Fetch routing-matrix bundle + select anthropic --------------
+    # `amplifier update -y` is required first: the routing-matrix
+    # bundle is lazy-fetched, and `amplifier routing use anthropic`
+    # silently no-ops when the matrix registry is empty.
+    # `-y` skips the interactive "Proceed?" prompt that would otherwise
+    # abort in a non-TTY provisioning shell.
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      timeout 300 amplifier update -y
+      timeout 30 amplifier routing use anthropic
+
+    # --- Clone reality-check repo + pre-stage e2e playground ----------
+    # The playground script lives in the reality-check repo. The
+    # url_rewrite covers this git clone too when Gitea is configured.
+    - |
+      set -euo pipefail
+      timeout 120 git clone https://github.com/microsoft/amplifier-bundle-reality-check /opt/reality-check
+      timeout 180 /opt/reality-check/scripts/setup-e2e-playground.sh /root/home
+
+    # --- Verify all CLIs and bundles are present ----------------------
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      echo "=== amplifier ==="
+      amplifier --version
+      echo "=== amplifier-digital-twin ==="
+      amplifier-digital-twin --help >/dev/null && echo "OK"
+      echo "=== amplifier-gitea ==="
+      amplifier-gitea --help >/dev/null && echo "OK"
+      echo "=== agent-browser ==="
+      agent-browser --version
+      echo "=== bundles ==="
+      amplifier bundle list
+      echo "=== playground ==="
+      ls -la /root/home
+      ls -la /root/home/software/amplifier-chat | head -5
+      ls -la /root/home/user
+
+readiness:
+  - name: incus-daemon
+    command: "incus info >/dev/null 2>&1"
+  - name: default-profile-privileged
+    command: "incus profile show default | grep -q 'security.privileged: \"true\"'"
+  - name: docker-daemon
+    command: "docker info >/dev/null 2>&1"
+  - name: amplifier-cli
+    command: "test -x /root/.local/bin/amplifier"
+  - name: amplifier-digital-twin-cli
+    command: "test -x /root/.local/bin/amplifier-digital-twin"
+  - name: amplifier-gitea-cli
+    command: "test -x /root/.local/bin/amplifier-gitea"
+  - name: agent-browser-cli
+    command: "command -v agent-browser >/dev/null 2>&1"
+  - name: reality-check-bundle-installed
+    command: "/root/.local/bin/amplifier bundle list 2>/dev/null | grep -q reality-check"
+  - name: playground-staged
+    command: "test -d /root/home/software/amplifier-chat && test -f /root/home/user/spec.md"

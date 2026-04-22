@@ -2,6 +2,7 @@
 
 @README.md
 @bundle.md
+@docs/DEVELOPMENT.md
 
 ### Agents
 
