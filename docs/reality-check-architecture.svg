@@ -17,13 +17,13 @@
 </g>
 <g id="clust2" class="cluster">
 <title>cluster_reality_check</title>
-<path fill="#f0f8f0" stroke="#2d7d46" d="M67,-92C67,-92 481,-92 481,-92 487,-92 493,-98 493,-104 493,-104 493,-440 493,-440 493,-446 487,-452 481,-452 481,-452 67,-452 67,-452 61,-452 55,-446 55,-440 55,-440 55,-104 55,-104 55,-98 61,-92 67,-92"/>
-<text text-anchor="middle" x="274" y="-439.2" font-family="Helvetica,sans-Serif" font-size="11.00">amplifier&#45;bundle&#45;reality&#45;check</text>
+<path fill="#f0f8f0" stroke="#2d7d46" d="M75,-92C75,-92 481,-92 481,-92 487,-92 493,-98 493,-104 493,-104 493,-440 493,-440 493,-446 487,-452 481,-452 481,-452 75,-452 75,-452 69,-452 63,-446 63,-440 63,-440 63,-104 63,-104 63,-98 69,-92 75,-92"/>
+<text text-anchor="middle" x="278" y="-439.2" font-family="Helvetica,sans-Serif" font-size="11.00">amplifier&#45;bundle&#45;reality&#45;check</text>
 </g>
 <g id="clust3" class="cluster">
 <title>cluster_validators</title>
-<path fill="none" stroke="#999999" stroke-dasharray="5,2" d="M75,-177C75,-177 473,-177 473,-177 479,-177 485,-183 485,-189 485,-189 485,-252 485,-252 485,-258 479,-264 473,-264 473,-264 75,-264 75,-264 69,-264 63,-258 63,-252 63,-252 63,-189 63,-189 63,-183 69,-177 75,-177"/>
-<text text-anchor="middle" x="274" y="-252.8" font-family="Helvetica,sans-Serif" font-size="9.00">Validators (run sequentially, skip if no matching tests)</text>
+<path fill="none" stroke="#999999" stroke-dasharray="5,2" d="M83,-177C83,-177 473,-177 473,-177 479,-177 485,-183 485,-189 485,-189 485,-252 485,-252 485,-258 479,-264 473,-264 473,-264 83,-264 83,-264 77,-264 71,-258 71,-252 71,-252 71,-189 71,-189 71,-183 77,-177 83,-177"/>
+<text text-anchor="middle" x="278" y="-252.8" font-family="Helvetica,sans-Serif" font-size="9.00">Validators (run sequentially, skip if no matching tests)</text>
 </g>
 <g id="clust4" class="cluster">
 <title>cluster_dtu</title>
@@ -106,121 +106,121 @@
 <!-- criteria -->
 <g id="node6" class="node">
 <title>criteria</title>
-<polygon fill="#fff8e1" stroke="black" points="298,-339 210,-339 210,-301 304,-301 304,-333 298,-339"/>
-<polyline fill="none" stroke="black" points="298,-339 298,-333 "/>
-<polyline fill="none" stroke="black" points="304,-333 298,-333 "/>
-<text text-anchor="middle" x="257" y="-323.8" font-family="Helvetica,sans-Serif" font-size="14.00">Verification</text>
-<text text-anchor="middle" x="257" y="-308.8" font-family="Helvetica,sans-Serif" font-size="14.00">Criteria</text>
+<polygon fill="#fff8e1" stroke="black" points="302,-339 214,-339 214,-301 308,-301 308,-333 302,-339"/>
+<polyline fill="none" stroke="black" points="302,-339 302,-333 "/>
+<polyline fill="none" stroke="black" points="308,-333 302,-333 "/>
+<text text-anchor="middle" x="261" y="-323.8" font-family="Helvetica,sans-Serif" font-size="14.00">Verification</text>
+<text text-anchor="middle" x="261" y="-308.8" font-family="Helvetica,sans-Serif" font-size="14.00">Criteria</text>
 </g>
 <!-- intent&#45;&gt;criteria -->
 <g id="edge1" class="edge">
 <title>intent&#45;&gt;criteria</title>
-<path fill="none" stroke="black" d="M243.69,-385.99C245.88,-375.3 248.7,-361.5 251.19,-349.37"/>
-<polygon fill="black" stroke="black" points="254.68,-349.76 253.26,-339.26 247.82,-348.36 254.68,-349.76"/>
-<text text-anchor="middle" x="271.5" y="-360" font-family="Helvetica,sans-Serif" font-size="10.00">produces</text>
+<path fill="none" stroke="black" d="M244.56,-385.99C247.29,-375.19 250.82,-361.22 253.91,-349"/>
+<polygon fill="black" stroke="black" points="257.32,-349.81 256.38,-339.26 250.53,-348.1 257.32,-349.81"/>
+<text text-anchor="middle" x="273.5" y="-360" font-family="Helvetica,sans-Serif" font-size="10.00">produces</text>
 </g>
 <!-- terminal_tester -->
 <g id="node7" class="node">
 <title>terminal_tester</title>
-<path fill="#c8e6c9" stroke="black" d="M179,-238C179,-238 83,-238 83,-238 77,-238 71,-232 71,-226 71,-226 71,-197 71,-197 71,-191 77,-185 83,-185 83,-185 179,-185 179,-185 185,-185 191,-191 191,-197 191,-197 191,-226 191,-226 191,-232 185,-238 179,-238"/>
-<text text-anchor="middle" x="131" y="-222.8" font-family="Helvetica,sans-Serif" font-size="14.00">Terminal Tester</text>
-<text text-anchor="middle" x="131" y="-207.8" font-family="Helvetica,sans-Serif" font-size="14.00">agent</text>
-<text text-anchor="middle" x="131" y="-192.8" font-family="Helvetica,sans-Serif" font-size="14.00">(type: cli)</text>
+<path fill="#c8e6c9" stroke="black" d="M187,-238C187,-238 91,-238 91,-238 85,-238 79,-232 79,-226 79,-226 79,-197 79,-197 79,-191 85,-185 91,-185 91,-185 187,-185 187,-185 193,-185 199,-191 199,-197 199,-197 199,-226 199,-226 199,-232 193,-238 187,-238"/>
+<text text-anchor="middle" x="139" y="-222.8" font-family="Helvetica,sans-Serif" font-size="14.00">Terminal Tester</text>
+<text text-anchor="middle" x="139" y="-207.8" font-family="Helvetica,sans-Serif" font-size="14.00">agent</text>
+<text text-anchor="middle" x="139" y="-192.8" font-family="Helvetica,sans-Serif" font-size="14.00">(type: cli)</text>
 </g>
 <!-- criteria&#45;&gt;terminal_tester -->
 <g id="edge7" class="edge">
 <title>criteria&#45;&gt;terminal_tester</title>
-<path fill="none" stroke="black" d="M235.63,-300.93C217.49,-285.61 191.03,-263.24 169.25,-244.83"/>
-<polygon fill="black" stroke="black" points="171.37,-242.04 161.47,-238.25 166.85,-247.38 171.37,-242.04"/>
+<path fill="none" stroke="black" d="M240.3,-300.93C222.75,-285.61 197.12,-263.24 176.04,-244.83"/>
+<polygon fill="black" stroke="black" points="178.34,-242.19 168.5,-238.25 173.73,-247.47 178.34,-242.19"/>
 </g>
 <!-- browser_tester -->
 <g id="node8" class="node">
 <title>browser_tester</title>
-<path fill="#c8e6c9" stroke="black" d="M319,-238C319,-238 221,-238 221,-238 215,-238 209,-232 209,-226 209,-226 209,-197 209,-197 209,-191 215,-185 221,-185 221,-185 319,-185 319,-185 325,-185 331,-191 331,-197 331,-197 331,-226 331,-226 331,-232 325,-238 319,-238"/>
-<text text-anchor="middle" x="270" y="-222.8" font-family="Helvetica,sans-Serif" font-size="14.00">Browser Tester</text>
-<text text-anchor="middle" x="270" y="-207.8" font-family="Helvetica,sans-Serif" font-size="14.00">agent</text>
-<text text-anchor="middle" x="270" y="-192.8" font-family="Helvetica,sans-Serif" font-size="14.00">(type: browser)</text>
+<path fill="#c8e6c9" stroke="black" d="M327,-238C327,-238 229,-238 229,-238 223,-238 217,-232 217,-226 217,-226 217,-197 217,-197 217,-191 223,-185 229,-185 229,-185 327,-185 327,-185 333,-185 339,-191 339,-197 339,-197 339,-226 339,-226 339,-232 333,-238 327,-238"/>
+<text text-anchor="middle" x="278" y="-222.8" font-family="Helvetica,sans-Serif" font-size="14.00">Browser Tester</text>
+<text text-anchor="middle" x="278" y="-207.8" font-family="Helvetica,sans-Serif" font-size="14.00">agent</text>
+<text text-anchor="middle" x="278" y="-192.8" font-family="Helvetica,sans-Serif" font-size="14.00">(type: browser)</text>
 </g>
 <!-- criteria&#45;&gt;browser_tester -->
 <g id="edge8" class="edge">
 <title>criteria&#45;&gt;browser_tester</title>
-<path fill="none" stroke="black" d="M259.21,-300.93C260.96,-286.55 263.47,-265.96 265.63,-248.27"/>
-<polygon fill="black" stroke="black" points="269.12,-248.6 266.86,-238.25 262.17,-247.76 269.12,-248.6"/>
+<path fill="none" stroke="black" d="M263.88,-300.93C266.18,-286.55 269.47,-265.96 272.29,-248.27"/>
+<polygon fill="black" stroke="black" points="275.77,-248.68 273.89,-238.25 268.86,-247.58 275.77,-248.68"/>
 </g>
 <!-- generic_tester -->
 <g id="node9" class="node">
 <title>generic_tester</title>
-<path fill="#c8e6c9" stroke="black" stroke-dasharray="5,2" d="M465,-238C465,-238 361,-238 361,-238 355,-238 349,-232 349,-226 349,-226 349,-197 349,-197 349,-191 355,-185 361,-185 361,-185 465,-185 465,-185 471,-185 477,-191 477,-197 477,-197 477,-226 477,-226 477,-232 471,-238 465,-238"/>
-<text text-anchor="middle" x="413" y="-222.8" font-family="Helvetica,sans-Serif" font-size="14.00">Generic Tester</text>
-<text text-anchor="middle" x="413" y="-207.8" font-family="Helvetica,sans-Serif" font-size="14.00">(type: generic)</text>
-<text text-anchor="middle" x="413" y="-192.8" font-family="Helvetica,sans-Serif" font-size="14.00">API, library, etc.</text>
+<path fill="#c8e6c9" stroke="black" d="M464.5,-238C464.5,-238 369.5,-238 369.5,-238 363.5,-238 357.5,-232 357.5,-226 357.5,-226 357.5,-197 357.5,-197 357.5,-191 363.5,-185 369.5,-185 369.5,-185 464.5,-185 464.5,-185 470.5,-185 476.5,-191 476.5,-197 476.5,-197 476.5,-226 476.5,-226 476.5,-232 470.5,-238 464.5,-238"/>
+<text text-anchor="middle" x="417" y="-222.8" font-family="Helvetica,sans-Serif" font-size="14.00">Generic Tester</text>
+<text text-anchor="middle" x="417" y="-207.8" font-family="Helvetica,sans-Serif" font-size="14.00">agent</text>
+<text text-anchor="middle" x="417" y="-192.8" font-family="Helvetica,sans-Serif" font-size="14.00">(type: generic)</text>
 </g>
 <!-- criteria&#45;&gt;generic_tester -->
 <g id="edge9" class="edge">
 <title>criteria&#45;&gt;generic_tester</title>
-<path fill="none" stroke="black" d="M284.8,-300.87C300.99,-290.24 321.74,-276.49 340,-264 349.41,-257.57 359.43,-250.58 368.93,-243.9"/>
-<polygon fill="black" stroke="black" points="370.97,-246.74 377.13,-238.12 366.94,-241.02 370.97,-246.74"/>
+<path fill="none" stroke="black" d="M290.77,-300.97C307.74,-290.5 329.3,-276.86 348,-264 357.05,-257.77 366.59,-250.88 375.6,-244.21"/>
+<polygon fill="black" stroke="black" points="377.77,-246.96 383.69,-238.18 373.58,-241.35 377.77,-246.96"/>
 </g>
 <!-- reporter -->
 <g id="node10" class="node">
 <title>reporter</title>
-<path fill="#c8e6c9" stroke="black" d="M289,-138C289,-138 251,-138 251,-138 245,-138 239,-132 239,-126 239,-126 239,-112 239,-112 239,-106 245,-100 251,-100 251,-100 289,-100 289,-100 295,-100 301,-106 301,-112 301,-112 301,-126 301,-126 301,-132 295,-138 289,-138"/>
-<text text-anchor="middle" x="270" y="-122.8" font-family="Helvetica,sans-Serif" font-size="14.00">Report</text>
-<text text-anchor="middle" x="270" y="-107.8" font-family="Helvetica,sans-Serif" font-size="14.00">agent</text>
+<path fill="#c8e6c9" stroke="black" d="M297,-138C297,-138 259,-138 259,-138 253,-138 247,-132 247,-126 247,-126 247,-112 247,-112 247,-106 253,-100 259,-100 259,-100 297,-100 297,-100 303,-100 309,-106 309,-112 309,-112 309,-126 309,-126 309,-132 303,-138 297,-138"/>
+<text text-anchor="middle" x="278" y="-122.8" font-family="Helvetica,sans-Serif" font-size="14.00">Report</text>
+<text text-anchor="middle" x="278" y="-107.8" font-family="Helvetica,sans-Serif" font-size="14.00">agent</text>
 </g>
 <!-- terminal_tester&#45;&gt;reporter -->
 <g id="edge13" class="edge">
 <title>terminal_tester&#45;&gt;reporter</title>
-<path fill="none" stroke="black" d="M170.46,-184.81C190.23,-171.94 214.01,-156.45 233.37,-143.85"/>
-<polygon fill="black" stroke="black" points="235.45,-146.67 241.92,-138.28 231.63,-140.8 235.45,-146.67"/>
-<text text-anchor="middle" x="229" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00">results</text>
+<path fill="none" stroke="black" d="M178.46,-184.81C198.23,-171.94 222.01,-156.45 241.37,-143.85"/>
+<polygon fill="black" stroke="black" points="243.45,-146.67 249.92,-138.28 239.63,-140.8 243.45,-146.67"/>
+<text text-anchor="middle" x="237" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00">results</text>
 </g>
 <!-- browser_tester&#45;&gt;reporter -->
 <g id="edge14" class="edge">
 <title>browser_tester&#45;&gt;reporter</title>
-<path fill="none" stroke="black" d="M270,-184.81C270,-173.45 270,-160.05 270,-148.39"/>
-<polygon fill="black" stroke="black" points="273.5,-148.28 270,-138.28 266.5,-148.28 273.5,-148.28"/>
-<text text-anchor="middle" x="287" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00">results</text>
+<path fill="none" stroke="black" d="M278,-184.81C278,-173.45 278,-160.05 278,-148.39"/>
+<polygon fill="black" stroke="black" points="281.5,-148.28 278,-138.28 274.5,-148.28 281.5,-148.28"/>
+<text text-anchor="middle" x="295" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00">results</text>
 </g>
 <!-- generic_tester&#45;&gt;reporter -->
 <g id="edge15" class="edge">
 <title>generic_tester&#45;&gt;reporter</title>
-<path fill="none" stroke="black" stroke-dasharray="5,2" d="M372.4,-184.81C351.98,-171.88 327.38,-156.31 307.42,-143.68"/>
-<polygon fill="black" stroke="black" points="309.21,-140.67 298.88,-138.28 305.46,-146.59 309.21,-140.67"/>
-<text text-anchor="middle" x="358" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00">results</text>
+<path fill="none" stroke="black" d="M377.54,-184.81C357.77,-171.94 333.99,-156.45 314.63,-143.85"/>
+<polygon fill="black" stroke="black" points="316.37,-140.8 306.08,-138.28 312.55,-146.67 316.37,-140.8"/>
+<text text-anchor="middle" x="364" y="-159" font-family="Helvetica,sans-Serif" font-size="10.00">results</text>
 </g>
 <!-- report -->
 <g id="node13" class="node">
 <title>report</title>
-<polygon fill="#ffcdd2" stroke="black" points="234,-44.5 148,-44.5 148,-8.5 240,-8.5 240,-38.5 234,-44.5"/>
-<polyline fill="none" stroke="black" points="234,-44.5 234,-38.5 "/>
-<polyline fill="none" stroke="black" points="240,-38.5 234,-38.5 "/>
-<text text-anchor="middle" x="194" y="-29.7" font-family="Helvetica,sans-Serif" font-size="11.00">Reality Check</text>
-<text text-anchor="middle" x="194" y="-17.7" font-family="Helvetica,sans-Serif" font-size="11.00">Report</text>
+<polygon fill="#ffcdd2" stroke="black" points="242,-44.5 156,-44.5 156,-8.5 248,-8.5 248,-38.5 242,-44.5"/>
+<polyline fill="none" stroke="black" points="242,-44.5 242,-38.5 "/>
+<polyline fill="none" stroke="black" points="248,-38.5 242,-38.5 "/>
+<text text-anchor="middle" x="202" y="-29.7" font-family="Helvetica,sans-Serif" font-size="11.00">Reality Check</text>
+<text text-anchor="middle" x="202" y="-17.7" font-family="Helvetica,sans-Serif" font-size="11.00">Report</text>
 </g>
 <!-- reporter&#45;&gt;report -->
 <g id="edge16" class="edge">
 <title>reporter&#45;&gt;report</title>
-<path fill="none" stroke="black" d="M254.62,-99.69C243.2,-86.09 227.5,-67.39 214.94,-52.43"/>
-<polygon fill="black" stroke="black" points="217.44,-49.97 208.33,-44.56 212.08,-54.47 217.44,-49.97"/>
-<text text-anchor="middle" x="260.5" y="-74" font-family="Helvetica,sans-Serif" font-size="10.00">produces</text>
+<path fill="none" stroke="black" d="M262.62,-99.69C251.2,-86.09 235.5,-67.39 222.94,-52.43"/>
+<polygon fill="black" stroke="black" points="225.44,-49.97 216.33,-44.56 220.08,-54.47 225.44,-49.97"/>
+<text text-anchor="middle" x="268.5" y="-74" font-family="Helvetica,sans-Serif" font-size="10.00">produces</text>
 </g>
 <!-- visual -->
 <g id="node14" class="node">
 <title>visual</title>
-<polygon fill="#ffcdd2" stroke="black" stroke-dasharray="5,2" points="425.5,-53 258.5,-53 258.5,0 431.5,0 431.5,-47 425.5,-53"/>
-<polyline fill="none" stroke="black" stroke-dasharray="5,2" points="425.5,-53 425.5,-47 "/>
-<polyline fill="none" stroke="black" stroke-dasharray="5,2" points="431.5,-47 425.5,-47 "/>
-<text text-anchor="middle" x="345" y="-37.8" font-family="Helvetica,sans-Serif" font-size="14.00">User&#45;facing</text>
-<text text-anchor="middle" x="345" y="-22.8" font-family="Helvetica,sans-Serif" font-size="14.00">verification artifact</text>
-<text text-anchor="middle" x="345" y="-7.8" font-family="Helvetica,sans-Serif" font-size="14.00">(visual, dashboard, ...)</text>
+<polygon fill="#ffcdd2" stroke="black" stroke-dasharray="5,2" points="433.5,-53 266.5,-53 266.5,0 439.5,0 439.5,-47 433.5,-53"/>
+<polyline fill="none" stroke="black" stroke-dasharray="5,2" points="433.5,-53 433.5,-47 "/>
+<polyline fill="none" stroke="black" stroke-dasharray="5,2" points="439.5,-47 433.5,-47 "/>
+<text text-anchor="middle" x="353" y="-37.8" font-family="Helvetica,sans-Serif" font-size="14.00">User&#45;facing</text>
+<text text-anchor="middle" x="353" y="-22.8" font-family="Helvetica,sans-Serif" font-size="14.00">verification artifact</text>
+<text text-anchor="middle" x="353" y="-7.8" font-family="Helvetica,sans-Serif" font-size="14.00">(visual, dashboard, ...)</text>
 </g>
 <!-- reporter&#45;&gt;visual -->
 <g id="edge17" class="edge">
 <title>reporter&#45;&gt;visual</title>
-<path fill="none" stroke="black" stroke-dasharray="5,2" d="M285.18,-99.69C294.32,-88.65 306.25,-74.26 317.05,-61.23"/>
-<polygon fill="black" stroke="black" points="319.91,-63.26 323.59,-53.33 314.52,-58.8 319.91,-63.26"/>
-<text text-anchor="middle" x="331.5" y="-74" font-family="Helvetica,sans-Serif" font-size="10.00">generates</text>
+<path fill="none" stroke="black" stroke-dasharray="5,2" d="M293.18,-99.69C302.32,-88.65 314.25,-74.26 325.05,-61.23"/>
+<polygon fill="black" stroke="black" points="327.91,-63.26 331.59,-53.33 322.52,-58.8 327.91,-63.26"/>
+<text text-anchor="middle" x="339.5" y="-74" font-family="Helvetica,sans-Serif" font-size="10.00">generates</text>
 </g>
 <!-- dtu_env -->
 <g id="node12" class="node">
@@ -239,23 +239,23 @@
 <!-- dtu_env&#45;&gt;terminal_tester -->
 <g id="edge10" class="edge">
 <title>dtu_env&#45;&gt;terminal_tester</title>
-<path fill="none" stroke="black" d="M522.39,-300.95C514.15,-297.83 505.4,-294.96 497,-293 440.56,-279.87 422.85,-298.47 367,-283 356.46,-280.08 355.57,-274.8 345,-272 313.81,-263.72 230.34,-275.01 200,-264 187.8,-259.57 175.95,-252.23 165.6,-244.45"/>
-<polygon fill="black" stroke="black" points="167.66,-241.62 157.65,-238.17 163.33,-247.12 167.66,-241.62"/>
-<text text-anchor="middle" x="399" y="-275" font-family="Helvetica,sans-Serif" font-size="10.00">tests against</text>
+<path fill="none" stroke="black" d="M522.39,-300.96C514.15,-297.83 505.4,-294.96 497,-293 441,-279.95 423.41,-298.37 368,-283 357.47,-280.08 356.56,-274.82 346,-272 316.32,-264.08 236.86,-274.52 208,-264 195.81,-259.56 183.95,-252.21 173.61,-244.43"/>
+<polygon fill="black" stroke="black" points="175.67,-241.6 165.66,-238.15 171.33,-247.1 175.67,-241.6"/>
+<text text-anchor="middle" x="400" y="-275" font-family="Helvetica,sans-Serif" font-size="10.00">tests against</text>
 </g>
 <!-- dtu_env&#45;&gt;browser_tester -->
 <g id="edge11" class="edge">
 <title>dtu_env&#45;&gt;browser_tester</title>
-<path fill="none" stroke="black" d="M517.73,-300.89C510.82,-298.18 503.73,-295.47 497,-293 483.8,-288.17 480.31,-287.51 467,-283 452.76,-278.18 449.72,-275.1 435,-272 393.54,-263.27 379.67,-278.89 340,-264 327.85,-259.44 315.96,-252.13 305.54,-244.43"/>
-<polygon fill="black" stroke="black" points="307.56,-241.57 297.51,-238.22 303.28,-247.11 307.56,-241.57"/>
-<text text-anchor="middle" x="499" y="-275" font-family="Helvetica,sans-Serif" font-size="10.00">tests against</text>
+<path fill="none" stroke="black" d="M517.71,-300.95C510.8,-298.23 503.72,-295.5 497,-293 496.58,-292.84 436.44,-272.09 436,-272 398.04,-263.84 385.35,-277.66 349,-264 336.74,-259.39 324.7,-252.07 314.13,-244.37"/>
+<polygon fill="black" stroke="black" points="316.05,-241.44 305.98,-238.16 311.81,-247.01 316.05,-241.44"/>
+<text text-anchor="middle" x="498" y="-275" font-family="Helvetica,sans-Serif" font-size="10.00">tests against</text>
 </g>
 <!-- dtu_env&#45;&gt;generic_tester -->
 <g id="edge12" class="edge">
 <title>dtu_env&#45;&gt;generic_tester</title>
-<path fill="none" stroke="black" stroke-dasharray="5,2" d="M554.67,-300.75C550.13,-291.24 543.53,-279.97 535,-272 520.92,-258.85 503.4,-248.03 486.06,-239.39"/>
-<polygon fill="black" stroke="black" points="487.56,-236.23 477.03,-235.07 484.54,-242.54 487.56,-236.23"/>
-<text text-anchor="middle" x="575" y="-275" font-family="Helvetica,sans-Serif" font-size="10.00">tests against</text>
+<path fill="none" stroke="black" d="M555.05,-300.78C550.71,-291.28 544.34,-280 536,-272 521.66,-258.25 503.53,-247.02 485.76,-238.17"/>
+<polygon fill="black" stroke="black" points="487.06,-234.91 476.53,-233.76 484.05,-241.23 487.06,-234.91"/>
+<text text-anchor="middle" x="576" y="-275" font-family="Helvetica,sans-Serif" font-size="10.00">tests against</text>
 </g>
 </g>
 </svg>

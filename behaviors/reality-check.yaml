@@ -13,6 +13,7 @@ agents:
     - reality-check:intent-analyzer
     - reality-check:browser-tester
     - reality-check:terminal-tester
+    - reality-check:generic-tester
     - reality-check:report
     - browser-tester:browser-operator
 

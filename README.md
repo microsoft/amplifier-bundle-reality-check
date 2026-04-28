@@ -42,6 +42,7 @@ amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-reality-
 - **[Intent Analyzer](agents/intent-analyzer.md)** -- reads user interactions (spec, conversation history, feedback) and produces structured acceptance tests. The "what does done mean?" agent.
 - **[Browser Tester](agents/browser-tester.md)** -- drives a real browser against web UIs to verify they actually work end-to-end.
 - **[Terminal Tester](agents/terminal-tester.md)** -- drives terminal applications inside DTU environments to verify CLI/TUI apps work end-to-end. Uses the DTU exec bridge pattern with `terminal_inspector`.
+- **[Generic Tester](agents/generic-tester.md)** -- runs shell-level checks (HTTP probes, file checks, process inspection) inside DTU environments to verify headless software like APIs, services, libraries, and background workers. Uses the DTU exec bridge pattern with `bash`.
 - **[Report](agents/report.md)** -- consumes acceptance tests and validator results, produces a structured gap analysis and a self-contained HTML report.
 
 

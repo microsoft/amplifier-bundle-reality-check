@@ -45,7 +45,7 @@ digraph reality_check_architecture {
 
             terminal_tester [label="Terminal Tester\nagent\n(type: cli)", fillcolor="#c8e6c9"]
             browser_tester [label="Browser Tester\nagent\n(type: browser)", fillcolor="#c8e6c9"]
-            generic_tester [label="Generic Tester\n(type: generic)\nAPI, library, etc.", fillcolor="#c8e6c9", style="rounded,filled,dashed"]
+            generic_tester [label="Generic Tester\nagent\n(type: generic)", fillcolor="#c8e6c9"]
         }
 
         reporter [label="Report\nagent", fillcolor="#c8e6c9"]
@@ -86,12 +86,12 @@ digraph reality_check_architecture {
     // DTU environment is what gets tested
     dtu_env -> terminal_tester [label="tests against"]
     dtu_env -> browser_tester [label="tests against"]
-    dtu_env -> generic_tester [label="tests against", style=dashed]
+    dtu_env -> generic_tester [label="tests against"]
 
     // Validators feed reporter
     terminal_tester -> reporter [label="results"]
     browser_tester -> reporter [label="results"]
-    generic_tester -> reporter [label="results", style=dashed]
+    generic_tester -> reporter [label="results"]
 
     // Reporter produces outputs
     reporter -> report [label="produces"]

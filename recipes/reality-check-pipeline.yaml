@@ -136,12 +136,11 @@ steps:
   #     generic tests exist.
   # ------------------------------------------------------------------
   - id: generic-validation
-    agent: "self"
+    agent: "reality-check:generic-tester"
     prompt: |
-      Run generic acceptance tests against the deployed application.
+      Run generic tests against the deployed application.
 
       Acceptance tests path: {{output_dir}}/acceptance-tests/
-      Screenshot directory: {{output_dir}}/screenshots/
 
       The DTU environment was launched with these details:
       {{dtu_result}}
@@ -153,17 +152,10 @@ steps:
       If there are NO tests with type: generic across all files, respond
       with "No generic tests found. Skipping." and stop.
 
-      Otherwise, for each generic-type test, execute the steps inside the
-      DTU using `amplifier-digital-twin exec <id> -- <command>`. Use curl
-      for HTTP requests, bash for general commands, etc. 
-      Report each test as PASS, FAIL, or ERROR with evidence.
-
-      Return results in this format:
-      | ID | Test | Status | Evidence |
-      |----|------|--------|----------|
-      | generic-01 | ... | PASS/FAIL/ERROR | ... |
+      Otherwise, run every generic-type test using the DTU bridge pattern
+      (amplifier-digital-twin exec <id> -- <command>).
     output: "generic_results"
-    timeout: 900
+    timeout: 1200
 
   # ------------------------------------------------------------------
   # 4. Report
