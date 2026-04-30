@@ -1,0 +1,5 @@
+summary: "Has bad software_type"
+software_type: mobile_app  # not in enum
+entry_points: []
+tests: []
+assumptions: []

@@ -1,0 +1,47 @@
+[project]
+name = "amplifier-bundle-reality-check"
+version = "0.2.0"
+description = "Verify built software actually matches user intent via acceptance tests in Digital Twin environments"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Microsoft MADE:Explorations Team" }]
+keywords = ["amplifier", "reality-check", "acceptance-tests", "validation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "click>=8.3,<9.0",
+    "pyyaml>=6.0,<7.0",
+    "pydantic>=2.0,<3.0",
+    "ruamel.yaml>=0.18,<0.19",
+    "python-liquid>=2.1,<3.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "ruff",
+    "pyright",
+]
+
+[project.scripts]
+amplifier-reality-check = "amplifier_bundle_reality_check.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/amplifier_bundle_reality_check"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]

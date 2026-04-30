@@ -1,0 +1,102 @@
+# One iteration of the intent-analysis convergence loop.
+#
+# Called by reality-check-pipeline.yaml inside a `while_condition` step.
+# Runs the intent-analyzer agent, then validates the produced acceptance
+# tests via the bundle's CLI:
+#
+#   amplifier-reality-check validate-acceptance-tests <PATH>
+#
+# Exit codes (verified via --help):
+#   0 -- all files valid
+#   1 -- one or more files invalid
+#   2 -- unexpected error (e.g., path missing)
+#
+# The validator emits human-readable text (raw pydantic errors on failure)
+# rather than JSON, so we capture combined stdout+stderr to a tempfile and
+# wrap the result in a JSON envelope ourselves for `parse_json: true`.
+
+name: intent-iteration
+description: One pass of intent-analyzer plus CLI structural validation.
+version: 0.1.0
+
+context:
+  spec_path: ""
+  conversation_path: ""
+  software_path: ""
+  acceptance_tests_path: ""    # where the agent writes; same path the CLI validates
+  previous_errors: ""           # empty on first call; populated on retries
+
+steps:
+  # ------------------------------------------------------------------
+  # 1. Intent analysis (or refinement)
+  #    On the first iteration, previous_errors is empty and the agent
+  #    produces a fresh test set. On retries, previous_errors contains
+  #    the CLI's failure output and the agent must fix the flagged issues.
+  # ------------------------------------------------------------------
+  - id: intent-analysis
+    agent: "reality-check:intent-analyzer"
+    prompt: |
+      Analyze user intent and produce acceptance tests.
+
+      Output path: {{acceptance_tests_path}}
+
+      Read these files to understand what the user wanted:
+      - Spec / requirements: {{spec_path}}
+      - Conversation history: {{conversation_path}}
+
+      Then explore the software at {{software_path}} to ground the tests
+      in real values (ports, routes, commands, entry points).
+
+      Skip any file paths that are empty strings.
+
+      The output path is a directory. You may write a single YAML file
+      inside it or organize tests into a nested directory structure
+      mirroring the input specs -- your choice based on input complexity.
+
+      ---
+      PREVIOUS VALIDATION ERRORS (empty if this is the first attempt):
+
+      {{previous_errors}}
+
+      ---
+      If the section above is non-empty, your previous attempt FAILED CLI
+      structural validation. Read the existing files at
+      {{acceptance_tests_path}}, address every error listed above, and
+      rewrite the YAML so it passes
+      `amplifier-reality-check validate-acceptance-tests`. The recipe is
+      the authority on convergence -- your job is to fix what the CLI
+      flagged and return.
+    output: "intent_result"
+    timeout: 900
+
+  # ------------------------------------------------------------------
+  # 2. Structural validation via the bundle CLI
+  #    Captures combined stdout+stderr and exit code, then emits a
+  #    JSON envelope for the parent recipe's update_context block.
+  # ------------------------------------------------------------------
+  - id: validate-tests
+    type: "bash"
+    on_error: "continue"   # the parent loop, not this step, decides convergence
+    command: |
+      set +e
+      tmpfile=$(mktemp)
+      amplifier-reality-check validate-acceptance-tests "{{acceptance_tests_path}}" \
+        > "$tmpfile" 2>&1
+      exit_code=$?
+      set -e
+
+      python3 << PYEOF
+      import json
+      with open("$tmpfile") as f:
+          out = f.read()
+      print(json.dumps({
+          "validated": "true" if $exit_code == 0 else "false",
+          "exit_code": $exit_code,
+          "errors": "" if $exit_code == 0 else out,
+          "path": "{{acceptance_tests_path}}",
+      }))
+      PYEOF
+
+      rm -f "$tmpfile"
+    output: "validation_result"
+    parse_json: true

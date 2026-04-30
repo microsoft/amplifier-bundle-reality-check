@@ -1,0 +1,11 @@
+summary: "API service endpoints"
+software_type: api_service
+entry_points: []
+tests:
+  - id: b81ecc69
+    description: "Health endpoint responds"
+    type: other
+    steps:
+      - action: "GET /health"
+        expect: "200 with body 'ok'"
+assumptions: []

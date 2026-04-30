@@ -1,0 +1,12 @@
+results:
+  - id: aaaaaaaa
+    status: pass
+    evidence: Login page rendered and form submitted successfully.
+    screenshots:
+      - 01-login-loaded.png
+  - id: bbbbbbbb
+    status: pass
+    evidence: Dashboard loaded after login with user widgets.
+  - id: cccccccc
+    status: pass
+    evidence: /health returned 200 OK.

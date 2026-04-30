@@ -1,0 +1,5 @@
+summary: this top-level key is not allowed
+results:
+  - id: aaaaaaaa
+    status: pass
+    evidence: ok

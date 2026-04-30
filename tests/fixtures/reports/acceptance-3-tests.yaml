@@ -1,0 +1,26 @@
+summary: Three-test acceptance suite for report fixtures
+software_type: web_app
+entry_points:
+  - type: url
+    value: http://localhost:8080
+    label: web ui
+tests:
+  - id: aaaaaaaa
+    description: User can log in
+    type: browser
+    steps:
+      - action: open login page
+        expect: form is visible
+  - id: bbbbbbbb
+    description: User sees dashboard after login
+    type: browser
+    steps:
+      - action: log in
+        expect: dashboard loads
+  - id: cccccccc
+    description: API health endpoint responds
+    type: other
+    steps:
+      - action: hit /health
+        expect: 200 OK
+assumptions: []

@@ -1,0 +1,135 @@
+# One iteration of the report convergence loop.
+#
+# Called by reality-check-pipeline.yaml inside a `while_condition` step.
+# Runs the report agent (writes report.raw.yaml only), then validates the
+# produced raw YAML via the bundle's CLI:
+#
+#   amplifier-reality-check validate-report <RAW_PATH> \
+#       --acceptance-tests <ACCEPTANCE_PATH> \
+#       --output <EXPANDED_PATH> \
+#       --html-output <HTML_PATH> \
+#       --screenshots-dir <SCREENSHOTS_DIR> \
+#       --dtu-details-file <DTU_DETAILS_FILE>
+#
+# The CLI is the sole producer of both report.yaml (canonical expanded
+# YAML) and report.html (visual artifact). The agent only writes
+# report.raw.yaml.
+#
+# Exit codes:
+#   0 -- raw report is structurally valid; expanded report.yaml + report.html written
+#   1 -- raw report is structurally invalid (top-level shape wrong, etc.)
+#   2 -- unexpected error
+#
+# The validator emits human-readable text (raw pydantic errors on failure)
+# rather than JSON, so we capture combined stdout+stderr to a tempfile and
+# wrap the result in a JSON envelope for `parse_json: true`.
+
+name: report-iteration
+description: One pass of the report agent plus CLI structural validation.
+version: 0.2.0
+
+context:
+  acceptance_tests_path: ""
+  output_dir: ""
+  terminal_results: ""
+  browser_results: ""
+  generic_results: ""
+  dtu_result: ""
+  previous_errors: ""           # empty on first call; populated on retries
+
+steps:
+  # ------------------------------------------------------------------
+  # 1. Report generation (or refinement)
+  #    On the first iteration, previous_errors is empty and the agent
+  #    produces a fresh report.raw.yaml. On retries, previous_errors
+  #    contains the CLI's failure output and the agent must fix the
+  #    flagged issues. The agent does NOT produce HTML -- the CLI does.
+  # ------------------------------------------------------------------
+  - id: report-generation
+    agent: "reality-check:report"
+    prompt: |
+      Produce the reality check report.
+
+      acceptance_tests_path: {{acceptance_tests_path}}
+      output_dir: {{output_dir}}/report/
+
+      Write one file:
+      - {{output_dir}}/report/report.raw.yaml  (slim raw schema; CLI validates it)
+
+      Do NOT write report.yaml or report.html -- the CLI writes both as
+      the canonical expanded YAML and the visual HTML artifact after
+      this step.
+
+      --- terminal-tester results ---
+      {{terminal_results}}
+      --- end terminal-tester results ---
+
+      --- browser-tester results ---
+      {{browser_results}}
+      --- end browser-tester results ---
+
+      --- generic-tester results ---
+      {{generic_results}}
+      --- end generic-tester results ---
+
+      ---
+      previous_errors:
+      {{previous_errors}}
+      ---
+      If the section above is non-empty, your previous attempt FAILED CLI
+      structural validation. Read the existing report.raw.yaml at
+      {{output_dir}}/report/report.raw.yaml, address every error listed
+      above, and rewrite the file. The recipe is the authority on
+      convergence -- your job is to fix what the CLI flagged and return.
+    output: "report_result"
+    timeout: 900
+
+  # ------------------------------------------------------------------
+  # 2. Structural validation via the bundle CLI
+  #    Captures combined stdout+stderr and exit code, then emits a
+  #    JSON envelope for the parent recipe's update_context block.
+  #
+  #    The CLI now produces both report.yaml and report.html. We hand
+  #    it the DTU access details (from the parent recipe's dtu-launch
+  #    step) via a temp file so it can render an "Environment Access"
+  #    footer in the HTML.
+  # ------------------------------------------------------------------
+  - id: validate-report
+    type: "bash"
+    on_error: "continue"   # the parent loop, not this step, decides convergence
+    command: |
+      set +e
+      tmpfile=$(mktemp)
+      dtu_file=$(mktemp)
+      cat > "$dtu_file" <<'DTU_EOF'
+      {{dtu_result}}
+      DTU_EOF
+
+      amplifier-reality-check validate-report \
+        "{{output_dir}}/report/report.raw.yaml" \
+        --acceptance-tests "{{acceptance_tests_path}}" \
+        --output "{{output_dir}}/report/report.yaml" \
+        --html-output "{{output_dir}}/report/report.html" \
+        --screenshots-dir "{{output_dir}}/screenshots/" \
+        --dtu-details-file "$dtu_file" \
+        > "$tmpfile" 2>&1
+      exit_code=$?
+      set -e
+
+      python3 << PYEOF
+      import json
+      with open("$tmpfile") as f:
+          out = f.read()
+      print(json.dumps({
+          "validated": "true" if $exit_code == 0 else "false",
+          "exit_code": $exit_code,
+          "errors": "" if $exit_code == 0 else out,
+          "raw_path": "{{output_dir}}/report/report.raw.yaml",
+          "expanded_path": "{{output_dir}}/report/report.yaml",
+          "html_path": "{{output_dir}}/report/report.html",
+      }))
+      PYEOF
+
+      rm -f "$tmpfile" "$dtu_file"
+    output: "validation_result"
+    parse_json: true

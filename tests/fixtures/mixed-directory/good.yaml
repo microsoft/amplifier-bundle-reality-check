@@ -1,0 +1,5 @@
+summary: "Valid file alongside an invalid one"
+software_type: cli_tool
+entry_points: []
+tests: []
+assumptions: []

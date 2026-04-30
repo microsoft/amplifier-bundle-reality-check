@@ -24,7 +24,7 @@ delegate(agent="reality-check:terminal-tester", instruction="Acceptance tests pa
 delegate(agent="reality-check:browser-tester", instruction="Acceptance tests path: /tmp/acceptance-tests/ ...", context_depth="recent", context_scope="agents")
 ```
 
-Test types: `cli` -> terminal-tester, `browser` -> browser-tester, `generic` -> handle directly.
+Test types route as: `cli` -> terminal-tester, `browser` -> browser-tester, `other` -> generic-tester (the catch-all for anything that doesn't fit the specialized validators).
 
 Produce a gap analysis report from validator results:
 ```

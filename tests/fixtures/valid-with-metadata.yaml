@@ -1,0 +1,28 @@
+summary: "Valid file exercising the open-ended metadata field"
+software_type: cli_tool
+
+entry_points:
+  - type: command
+    value: "mytool"
+    label: "Tool binary"
+
+tests:
+  - id: fa0b8586
+    description: "Tool prints version"
+    type: cli
+    steps:
+      - action: "Run mytool --version"
+        expect: "Version string is printed"
+
+assumptions: []
+
+metadata:
+  source_spec: "specs/v2/api.md"
+  generated_by: "intent-analyzer"
+  tags:
+    - "smoke"
+    - "auth-team"
+  arbitrary_nested:
+    list: [1, 2, 3]
+    map:
+      key: value

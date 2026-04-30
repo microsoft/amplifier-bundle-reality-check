@@ -1,0 +1,5 @@
+summary: "Minimal valid acceptance tests"
+software_type: library
+entry_points: []
+tests: []
+assumptions: []

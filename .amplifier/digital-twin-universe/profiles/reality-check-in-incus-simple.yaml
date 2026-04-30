@@ -1,0 +1,341 @@
+# Simple smoke-test profile for the Reality Check bundle.
+#
+# Mirrors reality-check-in-incus.yaml but stages a minimal "add two numbers"
+# Python CLI inline instead of cloning amplifier-chat. Drops agent-browser
+# / Chromium / nodejs (no browser tests in this scenario) and drops the
+# access.ports forwarding block (no inner web UI).
+#
+# Goal: end-to-end wiring smoke test for the reality-check pipeline -- does
+# the recipe run, does the validate-acceptance-tests CLI loop converge, do
+# all four stages execute, is a report produced. Not a depth/quality test.
+#
+# Installs:
+#   1. Incus                                -- inner container runtime
+#   2. Docker Engine                        -- inner Gitea + mock sidecars
+#   3. uv + Amplifier CLI                   -- interactive Amplifier sessions
+#   4. amplifier-digital-twin CLI           -- drive inner Incus
+#   5. amplifier-gitea CLI                  -- drive inner Docker Gitea
+#   6. reality-check bundle (transitively:
+#      digital-twin-universe, gitea,
+#      browser-tester, terminal-tester)
+#   7. Inline playground at /root/home:
+#        software/add-two-numbers/{add.py,README.md}
+#        user/spec.md
+#
+# Usage:
+#   # Without Gitea (pulls reality-check from GitHub):
+#   amplifier-digital-twin launch reality-check-in-incus-simple
+#
+#   # With local Gitea override (pulls reality-check from Gitea):
+#   amplifier-digital-twin launch reality-check-in-incus-simple \
+#     --var GITEA_URL=http://localhost:10110 \
+#     --var GITEA_TOKEN=<token>
+#
+# Variables (optional):
+#   GITEA_URL   -- Gitea base URL. If set with GITEA_TOKEN, reality-check
+#                  clones are redirected through the proxy; otherwise
+#                  url_rewrites are silently skipped (rules carry
+#                  unresolved vars) and GitHub is used directly.
+#   GITEA_TOKEN -- Gitea API token paired with GITEA_URL.
+#
+# Notes:
+#   - No agent-browser / Chromium: the "add two numbers" CLI has no UI,
+#     so the recipe's browser-validation step exits early. The bundle
+#     still loads cleanly without the agent-browser CLI present.
+#   - No access.ports: nothing inside the DTU listens on a host-forwarded
+#     port. Reality-check artifacts are pulled out via file-pull from the
+#     wrapper script.
+name: reality-check-in-incus-simple
+description: >
+  Minimal smoke-test DTU for the reality-check pipeline. Inline "add two
+  numbers" Python CLI playground; full reality-check stack installed
+  (Incus + Docker + Amplifier CLI + reality-check bundle). No
+  agent-browser / Chromium / nodejs (no browser tests in scenario).
+
+base:
+  image: ubuntu:24.04
+  config:
+    security.nesting: "true"
+
+# Redirect reality-check bundle clones through a local Gitea when
+# GITEA_URL / GITEA_TOKEN are provided. Without them, rules carry
+# unresolved variables and the engine silently skips proxy setup,
+# so clones fall through to GitHub.
+url_rewrites:
+  auth:
+    username: admin
+    token_var: GITEA_TOKEN
+  rules:
+    - match: github.com/microsoft/amplifier-bundle-reality-check
+      target: ${GITEA_URL}/admin/amplifier-bundle-reality-check
+
+passthrough:
+  allow_external: true
+  services:
+    - name: anthropic
+      key_env: ANTHROPIC_API_KEY
+
+provision:
+  setup_cmds:
+    # Common prereqs for the apt repo setups.
+    - |
+      set -euo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+      timeout 180 apt-get update
+      timeout 300 apt-get install -y ca-certificates curl gnupg git
+
+    # --- Incus via Zabbly stable repo (noble = Ubuntu 24.04) ----------
+    - |
+      set -euo pipefail
+      install -m 0755 -d /etc/apt/keyrings
+      timeout 30 curl -fsSL --max-time 20 \
+        https://pkgs.zabbly.com/key.asc \
+        -o /etc/apt/keyrings/zabbly.asc
+      chmod a+r /etc/apt/keyrings/zabbly.asc
+      ARCH=$(dpkg --print-architecture)
+      cat > /etc/apt/sources.list.d/zabbly-incus-stable.sources <<EOF
+      Enabled: yes
+      Types: deb
+      URIs: https://pkgs.zabbly.com/incus/stable
+      Suites: noble
+      Components: main
+      Architectures: ${ARCH}
+      Signed-By: /etc/apt/keyrings/zabbly.asc
+      EOF
+
+    # --- Docker CE apt repo -------------------------------------------
+    - |
+      set -euo pipefail
+      timeout 30 curl -fsSL --max-time 20 \
+        https://download.docker.com/linux/ubuntu/gpg \
+        -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+      ARCH=$(dpkg --print-architecture)
+      CODENAME=$(. /etc/os-release && echo "${VERSION_CODENAME}")
+      echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${CODENAME} stable" \
+        > /etc/apt/sources.list.d/docker.list
+
+    # --- Install Incus + Docker (no nodejs; no browser tests here) ----
+    - |
+      set -euo pipefail
+      export DEBIAN_FRONTEND=noninteractive
+      timeout 180 apt-get update
+      timeout 600 apt-get install -y \
+        incus incus-base incus-client \
+        docker-ce docker-ce-cli containerd.io
+
+    # --- Ensure both daemons are up via systemd -----------------------
+    - |
+      set -euo pipefail
+      if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+        timeout 30 systemctl enable --now incus.socket incus.service
+        timeout 30 systemctl enable --now docker.service
+      else
+        nohup incusd  >/var/log/incusd.log  2>&1 &
+        nohup dockerd >/var/log/dockerd.log 2>&1 &
+      fi
+      for i in $(seq 1 60); do
+        [ -S /var/lib/incus/unix.socket ] && [ -S /var/run/docker.sock ] && break
+        sleep 1
+      done
+      if [ ! -S /var/lib/incus/unix.socket ]; then
+        echo "ERROR: Incus socket missing at /var/lib/incus/unix.socket"
+        (journalctl -u incus --no-pager -n 100 2>/dev/null) || true
+        exit 1
+      fi
+      if [ ! -S /var/run/docker.sock ]; then
+        echo "ERROR: Docker socket missing at /var/run/docker.sock"
+        (journalctl -u docker --no-pager -n 100 2>/dev/null) || true
+        exit 1
+      fi
+      echo "Both sockets up after ${i}s"
+
+    # --- Inner Incus: minimal init + privileged default profile -------
+    - timeout 60 incus admin init --minimal
+    - timeout 15 incus profile set default security.privileged=true
+
+    # --- Install uv (adds ~/.local/bin to ~/.profile) -----------------
+    - |
+      set -euo pipefail
+      timeout 60 curl -LsSf --max-time 45 https://astral.sh/uv/install.sh | sh
+
+    # --- Install Amplifier + DTU + Gitea CLIs -------------------------
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      timeout 120 uv tool install git+https://github.com/microsoft/amplifier
+      timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe
+      timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea
+
+    # --- Amplifier provider config (anthropic passthrough) ------------
+    - |
+      set -euo pipefail
+      mkdir -p /root/.amplifier
+      cat > /root/.amplifier/settings.yaml <<EOF
+      config:
+        # Disable CLI-injected notifications. amplifier-app-cli injects
+        # amplifier-bundle-notify into the root session's bundle and
+        # adds a hooks-notify module override. That override cascades
+        # into recipe sub-sessions (intent-analyzer, etc.), but the
+        # bundle composition does not -- so sub-sessions fail to load
+        # hooks-notify because the module isn't in their prepared
+        # bundle. Inside a DTU there is no user-facing terminal to
+        # notify anyway, so we disable the whole subsystem here.
+        notifications: {}
+        providers:
+          - module: provider-anthropic
+            source: git+https://github.com/microsoft/amplifier-module-provider-anthropic@main
+            config:
+              api_key: ${ANTHROPIC_API_KEY:-}
+              # Default model for the ROOT amplifier session. Routing
+              # (amplifier routing use anthropic) governs delegated
+              # agents; this only affects the interactive main chat.
+              default_model: claude-opus-4-7
+      EOF
+
+    # --- Compose reality-check bundle (transitively pulls DTU,
+    #     gitea, browser-tester, terminal-tester via its behavior) ----
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      timeout 300 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-reality-check@main --app
+
+    # --- Install reality-check Python package as a uv tool -----------
+    # The bundle exposes a CLI entry point (amplifier-reality-check)
+    # used by the recipe's validate-tests bash step and by the
+    # intent-analyzer agent. The git+https URL is rewritten through
+    # mitmproxy to Gitea when GITEA_URL/GITEA_TOKEN are set, so this
+    # installs the LOCAL working tree's CLI -- not upstream.
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      timeout 180 uv tool install git+https://github.com/microsoft/amplifier-bundle-reality-check
+      amplifier-reality-check --help >/dev/null && echo "amplifier-reality-check: OK"
+
+    # --- Fetch routing-matrix bundle + select anthropic --------------
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      timeout 300 amplifier update -y
+      timeout 30 amplifier routing use anthropic
+
+    # --- Inline playground: add-two-numbers CLI + spec ---------------
+    # No clone, no fixtures dir -- just write the files directly.
+    - |
+      set -euo pipefail
+      mkdir -p /root/home/software/add-two-numbers
+      mkdir -p /root/home/user
+
+      cat > /root/home/software/add-two-numbers/add.py <<'EOF'
+      #!/usr/bin/env python3
+      """Add two integers and print the sum."""
+      import argparse
+      import sys
+
+
+      def main() -> int:
+          parser = argparse.ArgumentParser(
+              description="Add two integers and print the sum.",
+          )
+          parser.add_argument("a", type=int, help="First integer.")
+          parser.add_argument("b", type=int, help="Second integer.")
+          args = parser.parse_args()
+          print(args.a + args.b)
+          return 0
+
+
+      if __name__ == "__main__":
+          sys.exit(main())
+      EOF
+      chmod +x /root/home/software/add-two-numbers/add.py
+
+      cat > /root/home/software/add-two-numbers/README.md <<'EOF'
+      # add-two-numbers
+
+      Tiny CLI that adds two integers and prints the sum.
+
+      ## Usage
+
+          python add.py 2 3
+          # 5
+
+          python add.py -1 1
+          # 0
+
+      Exits 0 on success. Exits non-zero with a usage error on invalid
+      input (non-integer args, wrong arg count, etc. -- argparse handles).
+      EOF
+
+      cat > /root/home/user/spec.md <<'EOF'
+      # Spec: add-two-numbers
+
+      A Python CLI that adds two integers.
+
+      ## Requirements
+
+      - Takes two integer arguments via positional command-line args.
+      - Prints the sum of the two integers to stdout.
+      - Exits 0 on success.
+      - Exits non-zero with a usage error on invalid input.
+
+      ## Examples
+
+          $ python add.py 2 3
+          5
+
+          $ python add.py -1 1
+          0
+
+          $ python add.py foo bar
+          # Non-zero exit, argparse usage error on stderr.
+      EOF
+
+    # --- Verify all CLIs and bundles are present ----------------------
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      echo "=== amplifier ==="
+      amplifier --version
+      echo "=== amplifier-digital-twin ==="
+      amplifier-digital-twin --help >/dev/null && echo "OK"
+      echo "=== amplifier-gitea ==="
+      amplifier-gitea --help >/dev/null && echo "OK"
+      echo "=== bundles ==="
+      amplifier bundle list
+      echo "=== playground ==="
+      ls -la /root/home
+      ls -la /root/home/software/add-two-numbers
+      ls -la /root/home/user
+
+# --- Update: refresh the reality-check bundle + CLI without relaunching ---
+# Pulls the latest snapshot from Gitea (when GITEA_URL/GITEA_TOKEN are set)
+# or GitHub. Faster iteration than destroy + relaunch when only the bundle's
+# code/recipe/CLI changed. Re-run with: amplifier-digital-twin update <id>.
+update:
+  cmds:
+    - |
+      set -euo pipefail
+      export PATH="/root/.local/bin:$PATH"
+      amplifier update --yes --force
+      uv tool install --force --reinstall git+https://github.com/microsoft/amplifier-bundle-reality-check
+      amplifier-reality-check --help >/dev/null && echo "amplifier-reality-check: OK"
+
+readiness:
+  - name: incus-daemon
+    command: "incus info >/dev/null 2>&1"
+  - name: default-profile-privileged
+    command: "incus profile show default | grep -q 'security.privileged: \"true\"'"
+  - name: docker-daemon
+    command: "docker info >/dev/null 2>&1"
+  - name: amplifier-cli
+    command: "test -x /root/.local/bin/amplifier"
+  - name: amplifier-digital-twin-cli
+    command: "test -x /root/.local/bin/amplifier-digital-twin"
+  - name: amplifier-gitea-cli
+    command: "test -x /root/.local/bin/amplifier-gitea"
+  - name: reality-check-bundle-installed
+    command: "/root/.local/bin/amplifier bundle list 2>/dev/null | grep -q reality-check"
+  - name: reality-check-cli-installed
+    command: "test -x /root/.local/bin/amplifier-reality-check"
+  - name: playground-staged
+    command: "test -f /root/home/software/add-two-numbers/add.py && test -f /root/home/user/spec.md"

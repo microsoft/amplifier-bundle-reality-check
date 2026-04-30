@@ -322,33 +322,45 @@ Screenshots (via `terminal_inspector screenshot`) are the most concrete
 evidence that the application works. Do NOT skip them.
 
 
+## Test IDs
+
+Every acceptance test in the YAML has an `id` field: an 8-char lowercase hex string (e.g. `a3f2b1c4`).
+
+**Use the test's existing `id` verbatim in your output.** Do not invent IDs,
+do not reformat them, do not derive new ones. The downstream report agent
+matches validator results to acceptance tests by exact ID lookup -- if your
+ID doesn't match a test in the YAML, your result is silently dropped during
+report extraction and effectively wasted.
+
+
 ## Test Report Format
 
 When completing verification, report results in a structured format.
 **One row per acceptance test** -- the report agent needs a 1:1 mapping.
+The `ID` column is the test's `id` from the YAML, copied verbatim.
 
 ```
 ## Terminal Test Results
 
-| ID | Test | Status | Evidence |
-|----|------|--------|----------|
-| cli-01 | CLI tool is installed and on PATH | PASS | `codex --version` returned 0.120.0 |
-| cli-02 | Help flag shows usage info | PASS | `codex --help` output contains "Usage:" |
-| cli-03 | Runs a basic command successfully | PASS | `codex "hello"` produced LLM response |
-| cli-04 | Handles invalid input gracefully | FAIL | Crashed with exit code 1 instead of error message |
-| tech-01 | Uses Node.js runtime | SKIP | Not verifiable via terminal interaction |
+| ID       | Test                                         | Status | Evidence                                                  |
+|----------|----------------------------------------------|--------|-----------------------------------------------------------|
+| 928d3754 | CLI tool is installed and on PATH            | PASS   | `codex --version` returned 0.120.0                        |
+| 8e7d5ed1 | Help flag shows usage info                   | PASS   | `codex --help` output contains "Usage:"                   |
+| fde06c24 | Runs a basic command successfully            | PASS   | `codex "hello"` produced LLM response                     |
+| 4d0e3f88 | Handles invalid input gracefully             | FAIL   | Crashed with exit code 1 instead of error message         |
+| 12c5b6d3 | Uses Node.js runtime                         | SKIP   | Not verifiable via terminal interaction                   |
 
 Screenshots captured:
 - 01-shell-connected -- DTU shell prompt visible
-- 02-app-version -- Output of version command
-- 03-help-output -- Help text displayed
-- 04-command-result -- Output after running basic command
-- 05-error-state -- Crash output from invalid input
+- 02-after-928d3754 -- Output of version command
+- 03-after-8e7d5ed1 -- Help text displayed
+- 04-after-fde06c24 -- Output after running basic command
+- 05-failure-4d0e3f88 -- Crash output from invalid input
 
 ```
 
 **Your return message MUST include:**
-1. The results table with **one row per acceptance test ID**
+1. The results table with **one row per acceptance test ID** (using the YAML's `id` verbatim)
 2. The list of screenshots with descriptions of what they show
 3. A **state changes** section listing anything you changed in the DTU
 4. An **issues encountered** section listing anything that failed, timed out, or required workarounds

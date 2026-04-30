@@ -125,8 +125,7 @@ conversation provides them, and call out unknowns in assumptions.
 ### 2. Extract explicit requirements
 
 Pull out everything the user directly asked for. These are quotes or
-paraphrases from the spec, conversation, or feedback. Each one becomes a
-`must` priority test.
+paraphrases from the spec, conversation, or feedback. Each one becomes a test.
 
 ### 3. Infer implicit requirements
 
@@ -137,8 +136,8 @@ If the user said "build a chat app," they implicitly expect:
 - They get a response back
 - The UI doesn't crash
 
-These become `should` priority tests. Be reasonable — don't invent requirements
-the user wouldn't care about.
+Add tests for these reasonable expectations. Be reasonable — don't invent
+requirements the user wouldn't care about.
 
 ### 4. Classify the software
 
@@ -148,8 +147,8 @@ Determine what was built. This drives which validators handle the tests. You can
 |------|-----------|---------|
 | Web app | `browser` | Chat UI, dashboard, admin panel |
 | CLI / TUI tool | `cli` | Command-line utility, TUI app, build tool |
-| API service | `generic` | REST/GraphQL endpoint |
-| Library | `generic` | Python package, npm module |
+| API service | `other` | REST/GraphQL endpoint |
+| Library | `other` | Python package, npm module |
 
 ### 5. Write acceptance tests
 
@@ -157,7 +156,6 @@ Each test gets:
 - A plain-English description of what's being verified
 - A `type` matching the validator that should run it
 - Concrete `steps` with `action` / `expect` pairs
-- A `priority`: `must`, `should`, or `nice`
 
 Steps should be specific enough that a validator agent can execute them
 without needing additional context. "Click the send button" is good.
@@ -174,6 +172,30 @@ not.
 
 If you inferred something that wasn't explicitly stated, call it out.
 This lets the orchestrator or user correct you before validators run.
+
+### 7. Validate before returning
+
+After writing your YAML, run the bundle's CLI to confirm it matches the
+schema:
+
+```bash
+amplifier-reality-check validate-acceptance-tests <output_path>
+```
+
+Exit `0` means every file is valid; exit `1` means at least one file failed.
+Errors are raw Pydantic error dicts pointing at the exact field that failed,
+e.g. `{"type": "missing", "loc": ["tests", 0, "steps", 0, "expect"], "msg": "Field required"}`.
+Read the errors, fix the YAML, and revalidate before returning. The canonical
+JSON Schema (for editors and programmatic use) is available via
+`amplifier-reality-check schema`. The CLI is the source of truth for the
+schema -- if your output validates, validators will accept it.
+
+**On test IDs:** every test in the schema has a required `id` field
+(8-char lowercase hex, e.g. `a3f2b1c4`). **Do not assign these
+yourself** -- the validator auto-injects an ID into any test that lacks one
+and rewrites the YAML in place.
+On retries, the IDs already in the YAML from a prior validation pass are
+preserved -- do not regenerate them.
 
 
 ## Output
@@ -218,14 +240,12 @@ entry_points:
 tests:
   - description: "Chat page loads with a message input and send button"
     type: browser
-    priority: must
     steps:
       - action: "Open http://localhost:8080/chat/"
         expect: "Page shows a text input and a send button"
 
   - description: "User can send a message and get a response"
     type: browser
-    priority: must
     steps:
       - action: "Type 'hello' into the message input"
         expect: "Text appears in the input"
@@ -234,31 +254,31 @@ tests:
 
   - description: "Page handles empty submission gracefully"
     type: browser
-    priority: should
     steps:
       - action: "Click send without typing anything"
         expect: "No crash, either a validation message or no-op"
 
   - description: "CLI tool is installed and shows help"
     type: cli
-    priority: must
     steps:
       - action: "Run 'mytool --help'"
         expect: "Help text with usage instructions is displayed"
 
   - description: "CLI processes a basic command"
     type: cli
-    priority: must
     steps:
       - action: "Run 'mytool run hello'"
         expect: "Output contains a response within 30 seconds"
 
   - description: "API returns version info"
-    type: generic
-    priority: must
+    type: other
     steps:
       - action: "Send GET request to /api/version"
         expect: "Response contains a version string"
+
+metadata:
+  source_spec: "specs/chat-ui.md"
+  tags: ["smoke", "v1"]
 
 assumptions:
   - "Port 8080 assumed from project defaults — spec didn't specify"
@@ -266,30 +286,33 @@ assumptions:
 ```
 
 **Rules:**
-- Every `must` test traces back to something the user explicitly said or
-  something unavoidably implied by the software type
-- `should` tests are reasonable expectations not explicitly stated
-- `nice` tests are stretch goals or edge cases
-- Don't write tests that can't be verified by the available validator types
-  (`browser`, `cli`, `generic`)
+- Every test traces back to something the user explicitly said or something
+  reasonably implied by the software type. Don't invent requirements.
+- Don't write tests that can't be verified by the available validator types.
+  Use `browser` for UI tests, `cli` for terminal/CLI tests, and `other` as
+  the catch-all for anything that doesn't fit either (e.g. HTTP probes,
+  filesystem checks, library imports)
 - Fewer good tests beat many shallow ones. For complex multi-file output, each file should be focused and manageable.
 - Steps must be concrete: "Navigate to /login" not "verify auth works"
 - Include `entry_points` so validators know where to point
+- Optional top-level `metadata` dict accepts anything that doesn't fit the
+  required fields (source spec path, tags, generation context). Validators
+  ignore it; it's an open extension point
 
 
 ## Quality Checklist
 
 Before returning, verify:
 
-- [ ] Every explicit user requirement has a `must` test
+- [ ] Every explicit user requirement has a corresponding test
 - [ ] Software type is correctly identified
 - [ ] Entry points are specified
 - [ ] Each test has at least one step with a concrete action and expectation
 - [ ] Assumptions are listed for anything you inferred
-- [ ] Tests are ordered: `must` first, then `should`, then `nice`
 - [ ] Each YAML file has 3-8 tests (scale with complexity)
 - [ ] If using directory output, the structure mirrors the input organization
 - [ ] Every YAML file is independently valid (has summary, software_type, tests)
+- [ ] Output passes `amplifier-reality-check validate <output_path>`
 
 
 @foundation:context/shared/common-agent-base.md

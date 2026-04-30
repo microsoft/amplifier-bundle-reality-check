@@ -1,0 +1,17 @@
+summary: "API service exposing version info"
+software_type: api_service
+
+entry_points:
+  - type: command
+    value: "myservice"
+    label: "Service binary"
+
+tests:
+  - id: f93b6164
+    description: "Service reports its version"
+    type: other
+    steps:
+      - action: "GET /api/version"
+        expect: "Response body contains a version string"
+
+assumptions: []

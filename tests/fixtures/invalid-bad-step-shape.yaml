@@ -1,0 +1,11 @@
+summary: "Step missing 'expect'"
+software_type: cli_tool
+entry_points: []
+tests:
+  - id: 205d96ee
+    description: "Has step without expect"
+    type: cli
+    steps:
+      - action: "Just an action"
+        # 'expect' is missing
+assumptions: []

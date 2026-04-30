@@ -128,16 +128,28 @@ Only SKIP tests that genuinely require non-browser access (database queries,
 filesystem inspection, container exec).
 
 
+## Test IDs
+
+Every acceptance test in the YAML has an `id` field: an 8-char lowercase hex string (e.g. `a3f2b1c4`).
+
+**Use the test's existing `id` verbatim in your output.** Do not invent IDs,
+do not reformat them, do not derive new ones. The downstream report agent
+matches validator results to acceptance tests by exact ID lookup -- if your
+ID doesn't match a test in the YAML, your result is silently dropped during
+report extraction and effectively wasted.
+
+
 ## Screenshots (REQUIRED)
 
-Instruct browser-operator to save screenshots at these checkpoints:
+Instruct browser-operator to save screenshots at these checkpoints. Use the
+test's `id` (8-char hex from the YAML) in the filename.
 
 | Checkpoint | Filename Pattern | When |
 |------------|-----------------|------|
 | UI loaded | `01-loaded.png` | After page renders and interactive elements appear |
-| Before interaction | `NN-before-<test-id>.png` | Right before significant interaction |
-| After interaction | `NN-after-<test-id>.png` | After completing an action |
-| Failure state | `XX-failure-<test-id>.png` | Whenever something unexpected happens |
+| Before interaction | `NN-before-<id>.png` | Right before significant interaction |
+| After interaction | `NN-after-<id>.png` | After completing an action |
+| Failure state | `XX-failure-<id>.png` | Whenever something unexpected happens |
 
 Screenshots are the most concrete evidence that the application works. They are
 also the primary input for visual verification via the vision model.
@@ -146,30 +158,31 @@ also the primary input for visual verification via the vision model.
 ## Test Report Format
 
 When completing verification, report results in a structured format.
-**One row per acceptance test** -- the report agent downstream needs a 1:1 mapping.
+**One row per acceptance test** -- the report agent downstream needs a 1:1
+mapping. The `ID` column is the test's `id` from the YAML, copied verbatim.
 
 ```
 ## Browser Test Results
 
-| ID | Test | Status | Evidence |
-|----|------|--------|----------|
-| chat-01 | Chat page loads at correct URL | PASS | Title "Amplifier Chat", #app-body present, loaded in 6s |
-| chat-02 | Message input and send button present | PASS | textarea#message-input found, button.send-btn found |
-| chat-03 | Submitting a message delivers to backend | PASS | Message appeared in #message-list, SSE stream began |
-| chat-04 | LLM responses stream token-by-token | PASS | Tokens appeared incrementally over 4s |
-| pin-01 | Pin a conversation | FAIL | Pin icon not visible on session card |
-| tech-01 | Backend is Python + FastAPI plugin | SKIP | Not verifiable via browser |
+| ID       | Test                                       | Status | Evidence                                                       |
+|----------|--------------------------------------------|--------|----------------------------------------------------------------|
+| a3f2b1c4 | Chat page loads at correct URL             | PASS   | Title "Amplifier Chat", #app-body present, loaded in 6s        |
+| 8e7d5ed1 | Message input and send button present      | PASS   | textarea#message-input found, button.send-btn found            |
+| fde06c24 | Submitting a message delivers to backend   | PASS   | Message appeared in #message-list, SSE stream began            |
+| 7b1c92aa | LLM responses stream token-by-token        | PASS   | Tokens appeared incrementally over 4s                          |
+| 4d0e3f88 | Pin a conversation                         | FAIL   | Pin icon not visible on session card                           |
+| 12c5b6d3 | Backend is Python + FastAPI plugin         | SKIP   | Not verifiable via browser                                     |
 
 Screenshots captured:
 - 01-loaded.png -- Web UI after initial render
-- 02-message-sent.png -- After sending "hello"
-- 03-response.png -- Streaming response complete
-- 04-pin-attempt.png -- Session card without visible pin icon
+- 02-after-a3f2b1c4.png -- Page rendered after initial open
+- 03-after-fde06c24.png -- Streaming response complete
+- 04-failure-4d0e3f88.png -- Session card without visible pin icon
 
 ```
 
 **Your return message MUST include:**
-1. The results table with **one row per acceptance test ID**
+1. The results table with **one row per acceptance test ID** (using the YAML's `id` verbatim)
 2. The list of screenshot files with descriptions of what they show
 3. A **state changes** section listing anything changed on the target
 4. An **issues encountered** section listing anything that failed, timed out, or required workarounds

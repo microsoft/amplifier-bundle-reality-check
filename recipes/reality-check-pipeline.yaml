@@ -1,55 +1,84 @@
 # End-to-end reality check pipeline.
 #
 # Required bundles: reality-check, digital-twin-universe, terminal-tester
-# Required CLIs:    amplifier-digital-twin, amplifier-gitea (if local repos),
-#                   agent-browser (for web apps), tmux (for terminal apps)
+# Required CLIs:    amplifier-reality-check (this bundle), amplifier-digital-twin,
+#                   amplifier-gitea (if local repos), agent-browser (web apps),
+#                   tmux (terminal apps)
 
 name: reality-check-pipeline
 description: >
-  Derives acceptance tests from user intent, deploys software in a Digital Twin
-  Universe environment, runs browser and/or terminal verification, and produces
-  a gap analysis report with an HTML artifact.
-version: 0.1.0
-author: dkoleczek
+  Derives acceptance tests from user intent (with a CLI-validated convergence
+  loop), deploys software in a Digital Twin Universe environment, runs browser
+  and/or terminal verification, and produces a gap analysis report with an
+  HTML artifact.
+version: 0.2.0
 
 context:
   spec_path: ""                # Path to spec / requirements file
   conversation_path: ""        # Path to conversation history file (optional)
-  feedback_path: ""            # Path to user feedback / clarifications (optional)
   software_path: ""            # Path to the software repo or directory to test
   output_dir: "./reality-check-output"  # Root directory for all outputs
   software_description: ""     # Optional hint for DTU (e.g. "FastAPI web app, needs ANTHROPIC_API_KEY, port 8410")
 
+  # Acceptance-tests location, treated as the recipe's source of truth for
+  # the path the CLI validates and downstream steps consume. Defaults inside
+  # the default `output_dir`; override independently if you change `output_dir`.
+  acceptance_tests_path: "./reality-check-output/acceptance-tests"
+
+  # Convergence state for the intent-analysis loop. `validated` flips to
+  # "true" the first iteration the CLI exits 0; `previous_errors` carries
+  # the CLI's failure output forward into the next agent attempt.
+  validated: "false"
+  previous_errors: ""
+
+  # Convergence state for the report loop. Same shape as the intent loop;
+  # tracked separately so the two loops don't collide.
+  report_validated: "false"
+  report_previous_errors: ""
+
 steps:
   # ------------------------------------------------------------------
-  # 1. Intent Analysis
-  #    Reads spec, conversation, and feedback files. Explores the software
-  #    to ground tests in real values. Produces acceptance tests at
-  #    {{output_dir}}/acceptance-tests/ (can be a single file or a
-  #    directory structure depending on input complexity).
+  # 1. Intent Analysis (CLI-validated convergence loop)
+  #    Iterates intent-iteration.yaml (intent-analyzer + CLI validator)
+  #    until `amplifier-reality-check validate-acceptance-tests` exits 0.
+  #    Capped at 3 attempts; subsequent guard step fails the recipe if
+  #    convergence is not reached.
   # ------------------------------------------------------------------
-  - id: intent-analysis
-    agent: "reality-check:intent-analyzer"
-    prompt: |
-      Analyze user intent and produce acceptance tests.
+  - id: intent-loop
+    type: "recipe"
+    recipe: "./intent-iteration.yaml"
+    context:
+      spec_path: "{{spec_path}}"
+      conversation_path: "{{conversation_path}}"
+      software_path: "{{software_path}}"
+      acceptance_tests_path: "{{acceptance_tests_path}}"
+      previous_errors: "{{previous_errors}}"
+    output: "iteration_result"
+    parse_json: true
+    timeout: 1200
+    on_error: "continue"
+    while_condition: "{{validated}} != true"
+    max_while_iterations: 3
+    break_when: "{{validated}} == true"
+    update_context:
+      validated: "{{iteration_result.validation_result.validated}}"
+      previous_errors: "{{iteration_result.validation_result.errors}}"
 
-      Output path: {{output_dir}}/acceptance-tests/
-
-      Read these files to understand what the user wanted:
-      - Spec / requirements: {{spec_path}}
-      - Conversation history: {{conversation_path}}
-      - User feedback: {{feedback_path}}
-
-      Then explore the software at {{software_path}} to ground the tests
-      in real values (ports, routes, commands, entry points).
-
-      Skip any file paths that are empty strings.
-
-      The output path is a directory. You may write a single YAML file
-      inside it or organize tests into a nested directory structure
-      mirroring the input specs -- your choice based on input complexity.
-    output: "intent_result"
-    timeout: 900
+  # ------------------------------------------------------------------
+  # 1b. Convergence guard
+  #     Fails the recipe if the loop exhausted its 3 attempts without
+  #     the CLI ever exiting 0. Per-iteration error output is in the
+  #     prior step logs; we do not re-echo it here.
+  # ------------------------------------------------------------------
+  - id: ensure-validated
+    type: "bash"
+    command: |
+      if [ "{{validated}}" != "true" ]; then
+        echo "ERROR: acceptance tests at {{acceptance_tests_path}} failed CLI validation after 3 iterations." >&2
+        echo "See the validate-tests step output in earlier iterations for the pydantic errors." >&2
+        exit 1
+      fi
+      echo "Acceptance tests validated: {{acceptance_tests_path}}"
 
   # ------------------------------------------------------------------
   # 2. DTU Launch
@@ -67,8 +96,8 @@ steps:
       Generate a DTU profile, launch the environment, and return access details.
       Save the profile to {{software_path}}/.amplifier/digital-twin-universe/profiles/
 
-      The intent analyzer found the following about this software:
-      {{intent_result}}
+      Validated acceptance tests for this software live at:
+      {{acceptance_tests_path}}
     output: "dtu_result"
     timeout: 1800
 
@@ -82,7 +111,7 @@ steps:
     prompt: |
       Run terminal tests against the deployed application.
 
-      Acceptance tests path: {{output_dir}}/acceptance-tests/
+      Acceptance tests path: {{acceptance_tests_path}}
       Screenshot directory: {{output_dir}}/screenshots/
 
       The DTU environment was launched with these details:
@@ -110,7 +139,7 @@ steps:
     prompt: |
       Run browser tests against the deployed application.
 
-      Acceptance tests path: {{output_dir}}/acceptance-tests/
+      Acceptance tests path: {{acceptance_tests_path}}
       Screenshot directory: {{output_dir}}/screenshots/
 
       The DTU environment was launched with these details:
@@ -129,18 +158,20 @@ steps:
     timeout: 1800
 
   # ------------------------------------------------------------------
-  # 3c. Generic Validation
-  #     Handles generic-type acceptance tests (API services, libraries,
-  #     etc.) that don't have a specialized validator. Uses bash/curl
-  #     and general tools inside the DTU. Exits immediately if no
-  #     generic tests exist.
+  # 3c. Generic Validation (catch-all)
+  #     Handles `type: other` acceptance tests -- the catch-all for
+  #     anything that doesn't fit the specialized browser or cli
+  #     validators (API services, libraries, file-system effects, etc.).
+  #     Uses bash/curl inside the DTU. Exits immediately if no
+  #     `other`-type tests exist. The agent is named `generic-tester`
+  #     because it acts as the generalist; the test type is `other`.
   # ------------------------------------------------------------------
   - id: generic-validation
     agent: "reality-check:generic-tester"
     prompt: |
-      Run generic tests against the deployed application.
+      Run `other`-type tests against the deployed application.
 
-      Acceptance tests path: {{output_dir}}/acceptance-tests/
+      Acceptance tests path: {{acceptance_tests_path}}
 
       The DTU environment was launched with these details:
       {{dtu_result}}
@@ -149,42 +180,60 @@ steps:
       of YAML files. If it is a directory, recursively discover all
       *.yaml files and collect tests from all of them.
 
-      If there are NO tests with type: generic across all files, respond
-      with "No generic tests found. Skipping." and stop.
+      If there are NO tests with type: other across all files, respond
+      with "No `other`-type tests found. Skipping." and stop.
 
-      Otherwise, run every generic-type test using the DTU bridge pattern
+      Otherwise, run every `other`-type test using the DTU bridge pattern
       (amplifier-digital-twin exec <id> -- <command>).
     output: "generic_results"
     timeout: 1200
 
   # ------------------------------------------------------------------
-  # 4. Report
-  #    Synthesizes acceptance tests + validator results into a structured
-  #    gap analysis with report.yaml and report.html.
+  # 4. Report (CLI-validated convergence loop)
+  #    Iterates report-iteration.yaml (report agent + CLI validator)
+  #    until `amplifier-reality-check validate-report` exits 0.
+  #    Capped at 3 attempts; subsequent guard step fails the recipe if
+  #    convergence is not reached.
+  #
+  #    Files produced:
+  #      - {{output_dir}}/report/report.raw.yaml  (agent, slim raw schema)
+  #      - {{output_dir}}/report/report.yaml      (CLI, expanded canonical)
+  #      - {{output_dir}}/report/report.html      (CLI, visual artifact)
   # ------------------------------------------------------------------
-  - id: report-generation
-    agent: "reality-check:report"
-    prompt: |
-      Produce the reality check report.
+  - id: report-loop
+    type: "recipe"
+    recipe: "./report-iteration.yaml"
+    context:
+      acceptance_tests_path: "{{acceptance_tests_path}}"
+      output_dir: "{{output_dir}}"
+      terminal_results: "{{terminal_results}}"
+      browser_results: "{{browser_results}}"
+      generic_results: "{{generic_results}}"
+      dtu_result: "{{dtu_result}}"
+      previous_errors: "{{report_previous_errors}}"
+    output: "report_iteration_result"
+    parse_json: true
+    timeout: 1500
+    on_error: "continue"
+    while_condition: "{{report_validated}} != true"
+    max_while_iterations: 3
+    break_when: "{{report_validated}} == true"
+    update_context:
+      report_validated: "{{report_iteration_result.validation_result.validated}}"
+      report_previous_errors: "{{report_iteration_result.validation_result.errors}}"
 
-      acceptance_tests_path: {{output_dir}}/acceptance-tests/
-      output_dir: {{output_dir}}/report/
-
-      --- terminal-tester results ---
-      {{terminal_results}}
-      --- end terminal-tester results ---
-
-      --- browser-tester results ---
-      {{browser_results}}
-      --- end browser-tester results ---
-
-      --- generic-tester results ---
-      {{generic_results}}
-      --- end generic-tester results ---
-
-      After writing the report, include the DTU environment details so the
-      user can interact with the deployed software themselves:
-
-      {{dtu_result}}
-    output: "final_output"
-    timeout: 900
+  # ------------------------------------------------------------------
+  # 4b. Report convergence guard
+  #     Fails the recipe if the loop exhausted its 3 attempts without
+  #     the CLI ever exiting 0. Per-iteration error output is in the
+  #     prior step logs; we do not re-echo it here.
+  # ------------------------------------------------------------------
+  - id: ensure-report-validated
+    type: "bash"
+    command: |
+      if [ "{{report_validated}}" != "true" ]; then
+        echo "ERROR: report at {{output_dir}}/report/report.raw.yaml failed CLI validation after 3 iterations." >&2
+        echo "See the validate-report step output in earlier iterations for the structural errors." >&2
+        exit 1
+      fi
+      echo "Report validated: {{output_dir}}/report/report.yaml"

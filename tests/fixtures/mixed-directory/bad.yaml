@@ -1,0 +1,5 @@
+# Missing required key 'tests'
+summary: "Invalid file alongside a valid one"
+software_type: cli_tool
+entry_points: []
+assumptions: []

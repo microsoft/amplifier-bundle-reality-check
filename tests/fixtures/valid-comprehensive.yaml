@@ -1,0 +1,35 @@
+summary: "Browser-accessible chat UI backed by an LLM"
+software_type: web_app
+
+entry_points:
+  - type: url
+    value: "http://localhost:8080/chat/"
+    label: "Chat UI"
+
+tests:
+  - id: 928d3754
+    description: "Chat page loads with a message input and send button"
+    type: browser
+    steps:
+      - action: "Open http://localhost:8080/chat/"
+        expect: "Page shows a text input and a send button"
+
+  - id: 8e7d5ed1
+    description: "User can send a message and get a response"
+    type: browser
+    steps:
+      - action: "Type 'hello' into the message input"
+        expect: "Text appears in the input"
+      - action: "Click send"
+        expect: "A response appears within 30 seconds"
+
+  - id: fde06c24
+    description: "Page handles empty submission gracefully"
+    type: browser
+    steps:
+      - action: "Click send without typing anything"
+        expect: "No crash, either a validation message or no-op"
+
+assumptions:
+  - "Port 8080 assumed from project defaults"
+  - "Single-user usage assumed -- no auth flow tested"

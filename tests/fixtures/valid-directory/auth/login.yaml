@@ -1,0 +1,14 @@
+summary: "User authentication login flow"
+software_type: web_app
+entry_points:
+  - type: url
+    value: "http://localhost:8080/login"
+    label: "Login page"
+tests:
+  - id: d1cb3226
+    description: "Login form renders"
+    type: browser
+    steps:
+      - action: "Navigate to /login"
+        expect: "Form with username and password fields"
+assumptions: []

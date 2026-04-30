@@ -13,8 +13,10 @@
 #        /root/.amplifier/projects  -> $OUT/sessions/
 #   5. Print a summary.
 #
-# Output goes to a timestamped directory under $PWD (the directory
-# from which the script is invoked), not the script's location.
+# Output goes to a timestamped directory under /tmp/reality-check-runs/
+# by default, so the repo working tree is never polluted regardless of
+# where the script is invoked from. Override with --out-dir if you want
+# the artifacts somewhere else.
 #
 # Usage:
 #   ./run-reality-check-validation.sh [flags]
@@ -23,10 +25,19 @@
 #   --profile PATH      Profile YAML (default: sibling of this script)
 #   --name NAME         Friendly --name for the DTU (default: none)
 #   --prompt TEXT       Prompt for `amplifier run` (default: see below)
+#   --out-dir PATH      Full output directory (default:
+#                       /tmp/reality-check-runs/reality-check-validation-<TS>).
+#                       Created if missing. Holds run.log, launch-info.json,
+#                       home/, and sessions/.
 #   --host-port PORT    Host TCP port to forward to the inner Chat UI
 #                       (default: 8410). Pass a different value when
 #                       running concurrent instances of this profile so
 #                       they don't fight over the same port.
+#   --var KEY=VALUE     Extra --var entry forwarded to launch. Repeatable.
+#                       (HOST_PORT is always passed automatically.)
+#   --exec-timeout SEC  Timeout in seconds for the `amplifier run` exec call
+#                       (default: 1800 = 30 min). Pass 'none' to disable.
+#                       Forwarded as `amplifier-digital-twin exec --timeout`.
 #   --destroy-on-finish Destroy the DTU after extraction (default: keep)
 #   --help              Show this help
 #
@@ -53,6 +64,11 @@ PROMPT="${DEFAULT_PROMPT}"
 DTU_NAME=""
 DESTROY_ON_FINISH="false"
 HOST_PORT="8410"   # forwarded to inner Chat UI; override per run with --host-port
+EXEC_TIMEOUT="1800"   # 30 min, override per run with --exec-timeout (or 'none')
+OUT_DIR=""   # full output dir; computed below if not passed via --out-dir
+
+# Extra --var entries forwarded to launch (HOST_PORT is always added below).
+declare -a EXTRA_VARS=()
 
 READINESS_TIMEOUT_SEC=1200   # 20 min, for provisioning + warmup
 READINESS_INTERVAL_SEC=10
@@ -69,7 +85,10 @@ while [[ $# -gt 0 ]]; do
     --profile)             PROFILE="$2"; shift 2 ;;
     --name)                DTU_NAME="$2"; shift 2 ;;
     --prompt)              PROMPT="$2"; shift 2 ;;
+    --out-dir)             OUT_DIR="$2"; shift 2 ;;
     --host-port)           HOST_PORT="$2"; shift 2 ;;
+    --var)                 EXTRA_VARS+=("$2"); shift 2 ;;
+    --exec-timeout)        EXEC_TIMEOUT="$2"; shift 2 ;;
     --destroy-on-finish)   DESTROY_ON_FINISH="true"; shift ;;
     --help|-h)             usage; exit 0 ;;
     *)                     echo "Unknown arg: $1" >&2; usage >&2; exit 2 ;;
@@ -82,10 +101,18 @@ if [[ ! -f "${PROFILE}" ]]; then
 fi
 
 # ---------------------------------------------------------------------
-# Output layout (under invocation CWD)
+# Output layout
+#
+# Default lives under /tmp/reality-check-runs/ so the repo working tree
+# is never polluted regardless of invocation CWD. Override with
+# --out-dir to send artifacts elsewhere (full path; created if missing).
 # ---------------------------------------------------------------------
 TS="$(date -u +%Y%m%d-%H%M%S)"
-OUT="${PWD}/reality-check-validation-${TS}"
+if [[ -z "${OUT_DIR}" ]]; then
+  OUT="/tmp/reality-check-runs/reality-check-validation-${TS}"
+else
+  OUT="${OUT_DIR}"
+fi
 LOG="${OUT}/run.log"
 LAUNCH_JSON="${OUT}/launch-info.json"
 
@@ -103,6 +130,9 @@ log "Prompt:     ${PROMPT}"
 log "Launching DTU (provisioning, ~10-15 min on first run) ..."
 
 LAUNCH_ARGS=(launch "${PROFILE}" --var "HOST_PORT=${HOST_PORT}")
+for v in "${EXTRA_VARS[@]}"; do
+  LAUNCH_ARGS+=(--var "$v")
+done
 if [[ -n "${DTU_NAME}" ]]; then
   LAUNCH_ARGS+=(--name "${DTU_NAME}")
 fi
@@ -215,13 +245,14 @@ fi
 # ---------------------------------------------------------------------
 # Run the reality-check pipeline with streamed output
 # ---------------------------------------------------------------------
-log "Starting recipe run via 'amplifier run' (this takes 10-30 min) ..."
+log "Starting recipe run via 'amplifier run' (this takes 10-30 min, exec-timeout=${EXEC_TIMEOUT}) ..."
 log "----- amplifier run output begins -----"
 
 # --stream gives raw passthrough (no JSON envelope). Exit code
 # propagates from the inner process. Tee to run.log for later review.
+# --timeout caps the exec call (default 1800s = 30 min, or 'none' for unlimited).
 set +e
-amplifier-digital-twin exec --stream "${DTU_ID}" \
+amplifier-digital-twin exec --stream --timeout "${EXEC_TIMEOUT}" "${DTU_ID}" \
   -- amplifier run "${PROMPT}" 2>&1 \
   | tee -a "${LOG}"
 run_rc="${PIPESTATUS[0]}"

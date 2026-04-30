@@ -1,0 +1,9 @@
+summary: "Test with empty steps"
+software_type: cli_tool
+entry_points: []
+tests:
+  - id: da262dfe
+    description: "Has no steps"
+    type: cli
+    steps: []  # empty list -- must be non-empty
+assumptions: []

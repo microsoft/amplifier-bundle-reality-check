@@ -1,0 +1,12 @@
+# Regression: 'generic' was renamed to 'other'. This file must fail validation.
+summary: "Uses old 'generic' test type"
+software_type: cli_tool
+entry_points: []
+tests:
+  - id: abb3e705
+    description: "Test using deprecated generic type"
+    type: generic  # was valid before; must be 'other' now
+    steps:
+      - action: "Run command"
+        expect: "Output appears"
+assumptions: []

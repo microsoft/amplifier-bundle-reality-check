@@ -45,7 +45,7 @@ digraph reality_check_architecture {
 
             terminal_tester [label="Terminal Tester\nagent\n(type: cli)", fillcolor="#c8e6c9"]
             browser_tester [label="Browser Tester\nagent\n(type: browser)", fillcolor="#c8e6c9"]
-            generic_tester [label="Generic Tester\nagent\n(type: generic)", fillcolor="#c8e6c9"]
+            generic_tester [label="Generic Tester\nagent\n(type: other)", fillcolor="#c8e6c9"]
         }
 
         reporter [label="Report\nagent", fillcolor="#c8e6c9"]

@@ -1,0 +1,10 @@
+results:
+  - id: aaaaaaaa
+    status: pass
+    evidence: Login worked.
+    screenshots: ["01-login.png"]
+  - id: bbbbbbbb
+    status: fail
+    evidence: Dashboard widgets did not render after 30 seconds.
+    screenshots: ["02-dashboard.png", "03-error.png"]
+  # cccccccc not reported -> should land in missing

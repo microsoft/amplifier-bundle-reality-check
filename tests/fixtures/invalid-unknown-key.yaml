@@ -1,0 +1,7 @@
+# extra="forbid" rejects unknown top-level keys (typo guard).
+summary: "Has an unknown top-level key"
+software_type: cli_tool
+entry_points: []
+tests: []
+assumptions: []
+unknown_key: "this should fail"

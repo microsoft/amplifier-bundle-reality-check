@@ -64,11 +64,27 @@ Then drive the pipeline step by step:
    ```
 
    (For CLI/TUI software, the terminal-tester step would run instead.
-   For API services or libraries, the generic step handles them.)
+   For API services, libraries, or anything with `type: other`, the
+   generic-tester catch-all handles them.)
 
 4. **Report** -- synthesize everything into a gap analysis.
 
+   The agent only writes a slim `report.raw.yaml`; the bundle's CLI is
+   the sole producer of the canonical expanded `report.yaml` and the
+   visual `report.html`.
+
    ```
    Produce the reality check report. Acceptance tests are at
-   ./acceptance-tests.yaml. Write report.yaml and report.html to ./report/.
+   ./acceptance-tests.yaml. Write report.raw.yaml to ./report/.
    ```
+
+   Then expand it into the canonical artifacts:
+
+   ```bash
+   amplifier-reality-check validate-report ./report/report.raw.yaml \
+       --acceptance-tests ./acceptance-tests.yaml
+   # writes ./report/report.expanded.yaml and ./report/report.html
+   ```
+
+   (In the recipe-driven pipeline this step is automated by the
+   `report-iteration` sub-recipe and capped at 3 attempts.)

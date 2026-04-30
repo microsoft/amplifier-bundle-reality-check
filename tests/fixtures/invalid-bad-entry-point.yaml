@@ -1,0 +1,8 @@
+summary: "Entry point with bad type"
+software_type: web_app
+entry_points:
+  - type: socket  # not in enum
+    value: "tcp://localhost:8080"
+    label: "Socket"
+tests: []
+assumptions: []

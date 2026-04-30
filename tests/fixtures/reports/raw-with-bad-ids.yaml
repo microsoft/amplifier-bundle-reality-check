@@ -1,0 +1,19 @@
+results:
+  - id: aaaaaaaa
+    status: pass
+    evidence: Login worked.
+  # Wrong id format -> dropped
+  - id: NOT-HEX
+    status: pass
+    evidence: This entry should be silently dropped.
+  # Unknown id (not in acceptance) -> dropped
+  - id: ff00ff00
+    status: fail
+    evidence: This entry has a valid format but no matching acceptance test.
+  # Bad status -> dropped
+  - id: bbbbbbbb
+    status: maybe
+    evidence: This status isn't valid.
+  # Missing required field (evidence) -> dropped
+  - id: cccccccc
+    status: pass
