@@ -32,16 +32,21 @@ For the CLI:
 
 This repo is an Amplifier bundle. The bundle provides a `reality-check` skill, agents, and recipes.
 
-`--app` composes the bundle onto every Amplifier session. Remove it to only register the bundle for later activation with `amplifier bundle use`.
+Install as an app bundle:
 
 ```bash
 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-reality-check@main --app
 ```
 
-To compose into an existing bundle:
+To compose into a custom bundle, reference the behavior:
+
 ```bash
 amplifier bundle add "git+https://github.com/microsoft/amplifier-bundle-reality-check@main#subdirectory=behaviors/reality-check.yaml" --app
 ```
+
+`--app` composes the bundle onto every Amplifier session. Remove it to only register the bundle for later activation with `amplifier bundle use`.
+
+This bundle doesn't ship a runtime (no provider, orchestrator, or tools) — it must be composed onto a bundle that does, like `amplifier-foundation`.
 
 The bundle ships an `amplifier-reality-check` CLI used by the recipe pipeline to validate acceptance tests and reports. Install it on PATH:
 
