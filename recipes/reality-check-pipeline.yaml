@@ -117,6 +117,16 @@ steps:
       The DTU environment was launched with these details:
       {{dtu_result}}
 
+      When extracting the SUT URL from `dtu_result`, prefer the in-SUT URL
+      form `http://localhost:<container_port>/<path>` for any command run
+      via `amplifier-digital-twin exec <id>` (the cli-type pattern this
+      tester uses) -- `localhost` inside the SUT's namespace is the SUT's
+      own loopback. The `access[*].url` localhost-bound URL in `dtu_result`
+      is for human use from the user's machine, not for runner-side
+      validators. If a test needs to probe the SUT directly from inside
+      the runner (rare for cli-type tests), use the runner-internal URL
+      form `http://<container_ip>:<container_port>/<path>` instead.
+
       The acceptance tests path can be a single YAML file or a directory
       of YAML files. If it is a directory, recursively discover all
       *.yaml files and collect tests from all of them.
@@ -144,6 +154,19 @@ steps:
 
       The DTU environment was launched with these details:
       {{dtu_result}}
+
+      When extracting the SUT URL from `dtu_result`, use the
+      **runner-internal URL form** (`http://<container_ip>:<container_port>/<path>`)
+      for any HTTP request initiated from this tester's environment. The
+      browser-tester runs `agent-browser` directly inside the runner Docker
+      container -- it does NOT bridge into the SUT via
+      `amplifier-digital-twin exec`. The localhost-bound URL in
+      `dtu_result.access[*].url` is for human use from the user's machine,
+      not for runner-side validators -- `localhost` from inside the runner
+      reaches the runner's own empty loopback, not the SUT. Reconstruct
+      the URL from `dtu_result.container_ip` and the in-DTU port
+      (`profile.access.ports[*].container`, NOT the `host:` value) if the
+      hand-back text does not surface it directly.
 
       The acceptance tests path can be a single YAML file or a directory
       of YAML files. If it is a directory, recursively discover all
@@ -175,6 +198,18 @@ steps:
 
       The DTU environment was launched with these details:
       {{dtu_result}}
+
+      When extracting the SUT URL from `dtu_result`, prefer the in-SUT URL
+      form `http://localhost:<container_port>/<path>` for any command run
+      via `amplifier-digital-twin exec <id> --` -- `localhost` inside the
+      SUT's namespace is the SUT's own loopback. The `access[*].url`
+      localhost-bound URL in `dtu_result` is for human use from the user's
+      machine, not for runner-side validators. If a test must probe the
+      SUT directly from inside the runner (without going through
+      `amplifier-digital-twin exec`), use the **runner-internal URL form**
+      `http://<container_ip>:<container_port>/<path>` instead --
+      `localhost` from inside the runner reaches the runner's own empty
+      loopback, NOT the SUT.
 
       The acceptance tests path can be a single YAML file or a directory
       of YAML files. If it is a directory, recursively discover all

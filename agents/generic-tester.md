@@ -23,13 +23,17 @@ meta:
           agent="reality-check:generic-tester",
           instruction="""Run `other`-type tests against the deployed application.
       Acceptance tests path: /tmp/acceptance-tests/
-      DTU environment: dtu-a1b2c3d4 (URL: http://localhost:8080)
+      DTU environment: dtu-a1b2c3d4
+        - In-SUT URL (for `amplifier-digital-twin exec` tests): http://localhost:8080
+        - Runner-internal URL (for direct curl from inside the runner): http://10.119.176.42:8080
       """,
           context_depth="recent",
       )
     <commentary>
     The agent discovers `other`-type tests, runs each via amplifier-digital-twin
-    exec, and returns a structured table.
+    exec (where `localhost` is the SUT's own loopback), and returns a
+    structured table. See "URL form for SUT access" below for which URL
+    form to use when.
     </commentary>
     </example>
 
@@ -41,13 +45,17 @@ meta:
           agent="reality-check:generic-tester",
           instruction="""Run `other`-type tests against the deployed application.
       Acceptance tests path: /workspace/acceptance-tests/
-      The DTU environment was launched: dtu-x1y2z3 with internal URL http://localhost:9000
+      The DTU environment was launched: dtu-x1y2z3
+        - In-SUT URL: http://localhost:9000  (for amplifier-digital-twin exec curl ...)
+        - Runner-internal URL: http://10.119.176.55:9000  (if probing direct from the runner)
       """,
           context_depth="recent",
       )
     <commentary>
     Directory of YAML files. The agent recursively discovers tests and only
-    executes those with type: other.
+    executes those with type: other. The localhost form is shorthand for
+    the in-SUT URL used inside `amplifier-digital-twin exec`; the runner
+    cannot reach the SUT via localhost directly.
     </commentary>
     </example>
 model_role: [coding, general]
@@ -111,6 +119,44 @@ capture, conditionals), wrap it in `bash -c`:
 ```bash
 amplifier-digital-twin exec <id> -- bash -c "curl -sS http://localhost:8080/health | grep -q '\"status\":\"ok\"' && echo MATCH || echo NO-MATCH"
 ```
+
+
+## URL form for SUT access (CRITICAL)
+
+There are two valid ways this agent can probe a SUT, and they require
+DIFFERENT URL forms. Picking the wrong one silently fails to connect.
+
+### Inside-SUT execution (PREFERRED for shell-style assertions)
+
+```bash
+amplifier-digital-twin exec <env_id> -- curl http://localhost:<container_port>/<path>
+```
+
+The `curl` runs inside the SUT's own network namespace via the DTU bridge,
+so `localhost` here is the SUT's loopback. The port is the in-DTU listener
+(`profile.access.ports[*].container`, which is what the SUT actually binds
+on). This is correct, this is the default, this is what every example in
+the "DTU Bridge Pattern" section above uses. Prefer this form.
+
+### Runner-side execution (only if you need it)
+
+```bash
+curl http://<container_ip>:<container_port>/<path>
+```
+
+If for some reason you need to issue an HTTP probe **directly from the
+runner** (not via `amplifier-digital-twin exec`) -- e.g. to verify the SUT
+is reachable from another sibling container, or to test client-side TLS --
+you MUST use the runner-internal URL form. `<container_ip>` comes from
+`dtu_result.container_ip` (typically `10.x.x.x`); `<container_port>` is the
+same in-DTU listener port as above. `localhost` from the runner reaches the
+runner's own empty loopback, NOT the SUT.
+
+The instruction you receive will typically surface both URL forms (e.g.
+"In-SUT URL: http://localhost:8080" and "Runner-internal URL:
+http://10.119.176.42:8080"). The localhost form in the instruction is
+shorthand for "use this inside `amplifier-digital-twin exec`"; the runner-
+internal form is for direct `curl` from outside the bridge.
 
 
 ## Acceptance Test Discovery and Coverage (CRITICAL)

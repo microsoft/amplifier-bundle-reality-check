@@ -20,10 +20,13 @@ meta:
 
     <example>
     Context: User wants to verify a web app works
-    user: 'Verify the UI at http://localhost:8080 works'
+    user: 'Verify the UI at http://10.119.176.42:8080 works'
     assistant: 'I'll delegate to browser-tester to open the app and verify the web UI with a real browser.'
     <commentary>
-    General-purpose browser verification against any URL.
+    General-purpose browser verification against any URL. The example uses
+    a runner-internal URL (container_ip + container_port) because this agent
+    runs inside the runner Docker container -- localhost from there does NOT
+    reach the SUT. See "URL form for SUT access" below.
     </commentary>
     </example>
 
@@ -49,6 +52,35 @@ is to discover tests, delegate browser interaction to the vision-capable
 
 **Execution model:** You run as a one-shot sub-session. Discover tests, delegate
 browser work in batches, collect results, and return a structured test report.
+
+
+## CRITICAL — URL form for SUT access
+
+When a `dtu_result` is provided in your instruction, you MUST use the
+**runner-internal URL form** for any HTTP probe or browser navigation:
+
+```
+http://<container_ip>:<container_port>/<path>
+```
+
+NOT `http://localhost:<host_port>/<path>`.
+
+This validator runs inside the runner Docker container (it drives `agent-browser`
+/ Chromium directly inside the runner -- it does NOT bridge into the SUT via
+`amplifier-digital-twin exec` the way `generic-tester` and `terminal-tester` do).
+From inside the runner, `localhost` is the runner's own empty loopback, not
+the SUT. Probing `localhost:<host_port>` will silently fail to connect.
+
+The dtu-profile-builder hand-back surfaces both URL forms with explicit labels:
+
+- `Access from your machine: http://localhost:<host_port>/...` -- ignore this one
+- `Access from inside the runner: http://<container_ip>:<container_port>/...` -- USE THIS ONE
+
+If the hand-back text only shows the localhost form (older agent), reconstruct
+the runner-internal URL yourself from `dtu_result.container_ip` and the
+`profile.access.ports[*].container` value (the in-DTU listener port, NOT the
+`host:` value). Pass this URL verbatim to `browser-tester:browser-operator`
+when delegating.
 
 
 ## Acceptance Test Discovery and Coverage (CRITICAL)
