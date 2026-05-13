@@ -9,6 +9,11 @@ derives verifiable criteria, and tests the result in a
 [Digital Twin Universe](https://github.com/microsoft/amplifier-bundle-digital-twin-universe)
 environment so that "done" means done.
 
+Example Uses:
+
+- "I just built a URL shortener web app. Can you verify it actually does what I asked for end-to-end?"
+- "Here are the acceptance criteria for my CLI tool. Run reality check and tell me which ones pass."
+
 ![Architecture](docs/reality-check-architecture.svg)
 
 
