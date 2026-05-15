@@ -162,7 +162,6 @@ provision:
     # --- Install Amplifier + DTU + Gitea CLIs -------------------------
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       timeout 120 uv tool install git+https://github.com/microsoft/amplifier
       timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe
       timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea
@@ -197,7 +196,6 @@ provision:
     #     gitea, browser-tester, terminal-tester via its behavior) ----
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       timeout 300 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-reality-check@main --app
 
     # --- Install reality-check Python package as a uv tool -----------
@@ -208,14 +206,12 @@ provision:
     # installs the LOCAL working tree's CLI -- not upstream.
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       timeout 180 uv tool install git+https://github.com/microsoft/amplifier-bundle-reality-check
       amplifier-reality-check --help >/dev/null && echo "amplifier-reality-check: OK"
 
     # --- Fetch routing-matrix bundle + select anthropic --------------
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       timeout 300 amplifier update -y
       timeout 30 amplifier routing use anthropic
 
@@ -293,7 +289,6 @@ provision:
     # --- Verify all CLIs and bundles are present ----------------------
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       echo "=== amplifier ==="
       amplifier --version
       echo "=== amplifier-digital-twin ==="
@@ -315,7 +310,6 @@ update:
   cmds:
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       amplifier update --yes --force
       uv tool install --force --reinstall git+https://github.com/microsoft/amplifier-bundle-reality-check
       amplifier-reality-check --help >/dev/null && echo "amplifier-reality-check: OK"
@@ -328,14 +322,14 @@ readiness:
   - name: docker-daemon
     command: "docker info >/dev/null 2>&1"
   - name: amplifier-cli
-    command: "test -x /root/.local/bin/amplifier"
+    command: "command -v amplifier"
   - name: amplifier-digital-twin-cli
-    command: "test -x /root/.local/bin/amplifier-digital-twin"
+    command: "command -v amplifier-digital-twin"
   - name: amplifier-gitea-cli
-    command: "test -x /root/.local/bin/amplifier-gitea"
+    command: "command -v amplifier-gitea"
   - name: reality-check-bundle-installed
-    command: "/root/.local/bin/amplifier bundle list 2>/dev/null | grep -q reality-check"
+    command: "amplifier bundle list 2>/dev/null | grep -q reality-check"
   - name: reality-check-cli-installed
-    command: "test -x /root/.local/bin/amplifier-reality-check"
+    command: "command -v amplifier-reality-check"
   - name: playground-staged
     command: "test -f /root/home/software/add-two-numbers/add.py && test -f /root/home/user/spec.md"

@@ -47,9 +47,6 @@
 #   - Both daemons run under the container's systemd. Manual
 #     `dockerd &` / `incusd &` start would race the auto-started
 #     socket units and cause init commands to hang.
-#   - uv tool install places binaries in /root/.local/bin; uv's
-#     installer appends that to ~/.profile so subsequent bash -lc
-#     (login-shell) setup_cmds and exec invocations pick it up.
 #   - `agent-browser install --with-deps` pulls Chromium (~300MB) and
 #     Linux system libraries. Provisioning takes noticeably longer
 #     than the plain dtu-host-in-incus profile.
@@ -195,12 +192,8 @@ provision:
       timeout 60 curl -LsSf --max-time 45 https://astral.sh/uv/install.sh | sh
 
     # --- Install Amplifier + DTU + Gitea CLIs -------------------------
-    # Each uv tool install creates an isolated venv; binaries end up in
-    # /root/.local/bin. Login-shell PATH picks them up for subsequent
-    # setup_cmds and exec invocations.
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       timeout 120 uv tool install git+https://github.com/microsoft/amplifier
       timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe
       timeout 60 uv tool install git+https://github.com/microsoft/amplifier-bundle-gitea
@@ -247,7 +240,6 @@ provision:
     # GitHub.
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       timeout 300 amplifier bundle add git+https://github.com/microsoft/amplifier-bundle-reality-check@main --app
 
     # --- Fetch routing-matrix bundle + select anthropic --------------
@@ -258,7 +250,6 @@ provision:
     # abort in a non-TTY provisioning shell.
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       timeout 300 amplifier update -y
       timeout 30 amplifier routing use anthropic
 
@@ -273,7 +264,6 @@ provision:
     # --- Verify all CLIs and bundles are present ----------------------
     - |
       set -euo pipefail
-      export PATH="/root/.local/bin:$PATH"
       echo "=== amplifier ==="
       amplifier --version
       echo "=== amplifier-digital-twin ==="
@@ -297,14 +287,14 @@ readiness:
   - name: docker-daemon
     command: "docker info >/dev/null 2>&1"
   - name: amplifier-cli
-    command: "test -x /root/.local/bin/amplifier"
+    command: "command -v amplifier"
   - name: amplifier-digital-twin-cli
-    command: "test -x /root/.local/bin/amplifier-digital-twin"
+    command: "command -v amplifier-digital-twin"
   - name: amplifier-gitea-cli
-    command: "test -x /root/.local/bin/amplifier-gitea"
+    command: "command -v amplifier-gitea"
   - name: agent-browser-cli
-    command: "command -v agent-browser >/dev/null 2>&1"
+    command: "command -v agent-browser"
   - name: reality-check-bundle-installed
-    command: "/root/.local/bin/amplifier bundle list 2>/dev/null | grep -q reality-check"
+    command: "amplifier bundle list 2>/dev/null | grep -q reality-check"
   - name: playground-staged
     command: "test -d /root/home/software/amplifier-chat && test -f /root/home/user/spec.md"
