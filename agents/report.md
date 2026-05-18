@@ -2,75 +2,38 @@
 meta:
   name: report
   description: |
-    Produces the raw reality check report. The final stage of the reality-check
-    pipeline. Writes a single `report.raw.yaml` -- a slim machine-validatable
-    artifact. The recipe runs `amplifier-reality-check validate-report` after
-    this agent to validate the raw YAML structurally and emit two derived
-    artifacts: the canonical expanded `report.yaml` and the visual `report.html`.
+    Final stage of the reality-check pipeline. Collects structured results from
+    terminal-tester, browser-tester, and generic-tester, then writes a single
+    report.raw.yaml. The pipeline runs amplifier-reality-check validate-report
+    after this agent to produce the canonical report.yaml and report.html.
 
-    Use after all validators have completed.
+    Use after all validators have completed. Pass acceptance_tests_path,
+    output_dir, and validator result tables in the delegation instruction.
 
-    **Authoritative on:** structuring validator results into the raw
-    report schema.
+    **Authoritative on:** structuring validator results into the raw report
+    schema, test-ID matching, pass/fail normalization
 
     **MUST be used for:**
-    - Producing `report.raw.yaml` from validator results
-
-    **Calling convention:** The instruction MUST include:
-    - `acceptance_tests_path` -- path to acceptance tests from intent-analyzer
-      (single YAML file or directory).
-    - `output_dir` -- directory where the agent writes `report.raw.yaml`.
-    - Validator results as labeled text blocks between
-      `--- <name> results ---` and `--- end <name> results ---` markers.
-    - Optionally `previous_errors` -- if non-empty, the previous attempt failed
-      CLI structural validation; fix the listed issues and rewrite the file.
+    - Producing report.raw.yaml from any combination of validator results
+    - Consolidating browser, terminal, and generic tester outputs into one file
 
     <example>
     Context: All validators completed; first attempt at the report.
     user: 'Produce the reality check report'
-    assistant: |
-      delegate(
-          agent="reality-check:report",
-          instruction="""Produce the reality check report.
-      acceptance_tests_path: /workspace/acceptance-tests/
-      output_dir: /workspace/reality-check/report/
-
-      --- terminal-tester results ---
-      | ID | Test | Status | Evidence |
-      |----|------|--------|----------|
-      | a3f2b1c4 | Login | PASS | exit 0 |
-      --- end terminal-tester results ---
-
-      previous_errors:
-      """,
-          context_depth="recent",
-          context_scope="agents",
-      )
+    assistant: 'I'll delegate to the report agent to consolidate validator results into report.raw.yaml.'
+    <commentary>
+    Embed validator result tables in the instruction as labeled blocks
+    (--- name results --- ... --- end name results ---). The agent matches
+    rows to acceptance tests by ID and writes only a top-level results: key.
+    </commentary>
     </example>
 
     <example>
-    Context: Retry iteration; previous attempt failed CLI validation.
+    Context: Retry; previous attempt failed CLI validation.
     user: 'Retry the report'
-    assistant: |
-      delegate(
-          agent="reality-check:report",
-          instruction="""Produce the reality check report.
-      acceptance_tests_path: /workspace/acceptance-tests/
-      output_dir: /workspace/reality-check/report/
-
-      --- terminal-tester results ---
-      ...
-      --- end terminal-tester results ---
-
-      previous_errors:
-      raw_errors:
-        - type: extra_forbidden
-          loc: [verdict]
-          msg: unknown top-level key: 'verdict'
-      """,
-      )
+    assistant: 'I'll re-run the report agent with previous_errors populated so it can fix the structural issue.'
     <commentary>
-    Drop the `verdict` key from report.raw.yaml on retry.
+    Drop unknown top-level keys (e.g. verdict) from report.raw.yaml on retry.
     </commentary>
     </example>
 model_role: [reasoning, writing, coding, general]

@@ -2,60 +2,38 @@
 meta:
   name: generic-tester
   description: |
-    Runs acceptance tests against software deployed in a Digital
-    Twin Universe environment. Uses bash inside the DTU to execute commands,
-    HTTP probes, and shell verification -- anything that doesn't fit the
-    terminal-tester (TUI/CLI interaction) or browser-tester (web UI) niches.
+    Catch-all validator in the reality-check pipeline. Runs acceptance tests
+    with type: other inside a Digital Twin Universe — HTTP probes, exit-code
+    checks, file/process state verification, and any shell-level assertion
+    that doesn't fit browser-tester (web UI) or terminal-tester (CLI/TUI).
 
     Use when acceptance tests have type: other -- typically API services,
-    libraries, background workers, file-system effects, or any verification
-    that's reducible to running a command and checking its output.
-    
-    **Calling convention:** The instruction MUST include:
-    - `acceptance_tests_path` -- single YAML file or directory of YAML files
-    - DTU details (the environment_id is required)
+    background workers, file-system effects, or anything reducible to running
+    a command and checking its output in a DTU.
+
+    **Authoritative on:** shell-based verification, HTTP probes, DTU exec
+    testing, command-output validation, generic acceptance test execution
+
+    **MUST be used for:**
+    - Running type: other acceptance tests against software in a DTU
+    - HTTP endpoint verification, filesystem checks, process inspection
 
     <example>
     Context: Validating an HTTP API inside a DTU
     user: 'Verify the /api/version endpoint returns a version string'
-    assistant: |
-      delegate(
-          agent="reality-check:generic-tester",
-          instruction="""Run `other`-type tests against the deployed application.
-      Acceptance tests path: /tmp/acceptance-tests/
-      DTU environment: dtu-a1b2c3d4
-        - In-SUT URL (for `amplifier-digital-twin exec` tests): http://localhost:8080
-        - Runner-internal URL (for direct curl from inside the runner): http://10.119.176.42:8080
-      """,
-          context_depth="recent",
-      )
+    assistant: 'I'll delegate to generic-tester to run the HTTP probe inside the DTU and verify the response.'
     <commentary>
-    The agent discovers `other`-type tests, runs each via amplifier-digital-twin
-    exec (where `localhost` is the SUT's own loopback), and returns a
-    structured table. See "URL form for SUT access" below for which URL
-    form to use when.
+    Runs type: other tests via amplifier-digital-twin exec inside the DTU.
+    Pass acceptance_tests_path and DTU environment_id in the instruction.
     </commentary>
     </example>
 
     <example>
     Context: Mixed test suite, only `other`-type tests remain
     user: 'Run the generic verification pass against the DTU'
-    assistant: |
-      delegate(
-          agent="reality-check:generic-tester",
-          instruction="""Run `other`-type tests against the deployed application.
-      Acceptance tests path: /workspace/acceptance-tests/
-      The DTU environment was launched: dtu-x1y2z3
-        - In-SUT URL: http://localhost:9000  (for amplifier-digital-twin exec curl ...)
-        - Runner-internal URL: http://10.119.176.55:9000  (if probing direct from the runner)
-      """,
-          context_depth="recent",
-      )
+    assistant: 'I'll use generic-tester to cover the type: other tests in the acceptance suite against the DTU.'
     <commentary>
-    Directory of YAML files. The agent recursively discovers tests and only
-    executes those with type: other. The localhost form is shorthand for
-    the in-SUT URL used inside `amplifier-digital-twin exec`; the runner
-    cannot reach the SUT via localhost directly.
+    Recursively discovers all type: other tests from a directory of YAML files.
     </commentary>
     </example>
 model_role: [coding, general]

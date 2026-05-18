@@ -2,9 +2,10 @@
 meta:
   name: terminal-tester
   description: |
-    Terminal-based verification of CLI and TUI applications inside Digital Twin
-    Universe environments. Uses the terminal_inspector tool to spawn, interact
-    with, and verify terminal applications as a real user would.
+    Terminal-based acceptance test validator in the reality-check pipeline.
+    Covers type: cli tests (produced by intent-analyzer) by using
+    terminal_inspector to spawn, interact with, and verify CLI/TUI
+    applications inside Digital Twin Universe environments.
 
     Use PROACTIVELY when the user wants to verify a terminal application works,
     test a CLI tool's output, or validate TUI interactions inside a DTU.
