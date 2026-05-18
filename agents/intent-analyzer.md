@@ -3,11 +3,12 @@ meta:
   name: intent-analyzer
   description: |
     Reads user interactions (spec, conversation history, feedback) and produces
-    structured acceptance tests. This is the "what does done mean?" agent.
+    structured acceptance tests. This is the "what does done mean?" agent —
+    first stage of the reality-check pipeline, before any validators run.
 
-    Use when you need to determine what a user actually intended and translate
-    that into concrete, testable acceptance tests that validator agents can
-    execute against a deployed environment.
+    Use PROACTIVELY when you need to translate what a user wanted into concrete,
+    testable acceptance tests that pipeline validators (terminal-tester,
+    browser-tester, generic-tester) can execute.
 
     **Authoritative on:** user intent extraction, acceptance test derivation,
     verification planning, translating requirements into testable steps
@@ -15,60 +16,24 @@ meta:
     **MUST be used for:**
     - Extracting acceptance tests from user specs and conversations
     - Determining what "done" means for a piece of built software
-    - Producing structured test lists that validators can consume
-
-    **Calling convention:** Pass `context_depth="all"` so the agent receives the
-    full conversation history -- that's its primary input for understanding user
-    intent. The instruction MUST include an `output_path` telling the agent where
-    to write acceptance tests. The output_path can be a single YAML file or a
-    directory -- the agent decides the structure based on input complexity.
-    Optionally include file paths, repo URLs, or a spec file/directory for the
-    agent to explore.
+    - Producing structured test lists (type: browser, cli, other) for validators
 
     <example>
     Context: A resolver built a web app and needs to verify it
     user: 'Analyze what the user wanted and produce acceptance tests'
-    assistant: |
-      delegate(
-          agent="reality-check:intent-analyzer",
-          instruction="Analyze user intent and produce acceptance tests. Output path: /tmp/acceptance-tests/. The project repo is at ~/projects/my-chat-app.",
-          context_depth="all",
-          context_scope="agents",
-      )
+    assistant: 'I'll delegate to intent-analyzer to derive structured acceptance tests from the conversation history.'
     <commentary>
-    Passes output path (directory), full conversation history, and a repo path hint.
-    The agent decides whether to write a single file or organized directory structure.
+    Pass context_depth=all and an output path. The agent decides single-file
+    or directory output based on complexity.
     </commentary>
     </example>
 
     <example>
     Context: Called early, before software exists
     user: 'What should we verify once this is built?'
-    assistant: |
-      delegate(
-          agent="reality-check:intent-analyzer",
-          instruction="Analyze user intent and produce acceptance tests. Output path: .amplifier/reality-check/acceptance-tests/",
-          context_depth="all",
-          context_scope="agents",
-      )
+    assistant: 'I'll use intent-analyzer to derive acceptance tests from the conversation, flagging unknowns as assumptions.'
     <commentary>
-    No file paths yet -- the agent derives tests purely from conversation history and flags unknowns as assumptions.
-    </commentary>
-    </example>
-
-    <example>
-    Context: Project has specs organized in directories
-    user: 'Generate acceptance tests from the specs in specs/features/'
-    assistant: |
-      delegate(
-          agent="reality-check:intent-analyzer",
-          instruction="Analyze user intent and produce acceptance tests. Output path: /tmp/acceptance-tests/. Spec directory: ~/projects/my-app/specs/features/",
-          context_depth="all",
-          context_scope="agents",
-      )
-    <commentary>
-    Spec input is a directory. The agent discovers all spec files recursively and
-    mirrors the directory structure in the output.
+    No file paths needed — derives tests purely from conversation history.
     </commentary>
     </example>
 model_role: [reasoning, general]

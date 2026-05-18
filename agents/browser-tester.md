@@ -2,9 +2,9 @@
 meta:
   name: browser-tester
   description: |
-    Browser-based verification of web applications. Orchestrates acceptance test
-    execution by delegating browser interaction to the vision-capable
-    browser-tester:browser-operator agent for visual verification.
+    Browser-based acceptance test orchestrator in the reality-check pipeline.
+    Delegates type: browser tests (produced by intent-analyzer) to the
+    vision-capable browser-operator agent for visual web UI verification.
 
     Use PROACTIVELY when the user wants to verify a web application's UI
     works, test a deployed app, or do browser-based smoke testing against
@@ -23,10 +23,8 @@ meta:
     user: 'Verify the UI at http://10.119.176.42:8080 works'
     assistant: 'I'll delegate to browser-tester to open the app and verify the web UI with a real browser.'
     <commentary>
-    General-purpose browser verification against any URL. The example uses
-    a runner-internal URL (container_ip + container_port) because this agent
-    runs inside the runner Docker container -- localhost from there does NOT
-    reach the SUT. See "URL form for SUT access" below.
+    Use the runner-internal URL (container_ip + container_port) -- localhost
+    from inside the runner does NOT reach the SUT.
     </commentary>
     </example>
 
