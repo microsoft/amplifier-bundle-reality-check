@@ -95,7 +95,15 @@ terminal_inspector(
     timeout_s=10.0
 )
 
-# Step 3: Type the app command, then press Enter separately
+# Step 3: Disable bash history expansion (REQUIRED)
+# Interactive bash expands '!' as a history reference by default. Any test
+# command containing '!' (e.g. 'slugify("special!@#$%chars")') would fail
+# with 'bash: !@#: event not found'. set +H disables this expansion.
+terminal_inspector(operation="send_text", session_id=sid, text="set +H")
+terminal_inspector(operation="send_keys", session_id=sid, keys="{ENTER}")
+terminal_inspector(operation="wait_for_text", session_id=sid, text="root@", timeout_s=5.0)
+
+# Step 4: Type the app command, then press Enter separately
 terminal_inspector(operation="send_text", session_id=sid, text="<app_command>")
 terminal_inspector(operation="send_keys", session_id=sid, keys="{ENTER}")
 ```
@@ -168,6 +176,14 @@ terminal_inspector(
     text="root@",
     timeout_s=10.0
 )
+
+# Disable bash history expansion immediately after connecting (REQUIRED).
+# Interactive bash expands '!' as a history reference. Test commands can
+# contain '!' (e.g. slugify("special!@#$%chars")), which would fail with
+# 'bash: !@#: event not found'. set +H disables this expansion safely.
+terminal_inspector(operation="send_text", session_id=sid, text="set +H")
+terminal_inspector(operation="send_keys", session_id=sid, keys="{ENTER}")
+terminal_inspector(operation="wait_for_text", session_id=sid, text="root@", timeout_s=5.0)
 ```
 
 ### 2. Launch the App and Wait for Ready
