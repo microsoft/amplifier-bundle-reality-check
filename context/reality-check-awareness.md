@@ -9,6 +9,15 @@ You have access to the Amplifier Reality Check bundle for verifying that built s
 - User needs acceptance tests derived from their conversation and spec
 - Do NOT use this to validate the amplifier ecosystem. You should use `amplifier-bundle-amplifier-tester`. If it is not installed, tell the user to get that bundle. Only use this bundle if they insist.
 
+## Required CLIs
+
+This bundle's agents shell out to two CLIs that are not bundled with it and must be on PATH:
+
+- `amplifier-digital-twin` (from amplifier-bundle-digital-twin-universe)
+- `amplifier-gitea` (from amplifier-bundle-gitea, only when testing local repos)
+
+The `reality-check-pipeline` recipe installs any missing CLIs as its first step. For ad-hoc/delegated use, install via `uv tool install git+https://github.com/microsoft/<repo>@main` if `which` reports them missing.
+
 ## How to Use
 
 **ALWAYS delegate reality check work to the specialized agents.**

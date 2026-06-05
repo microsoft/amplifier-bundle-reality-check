@@ -2,8 +2,9 @@
 #
 # Required bundles: reality-check, digital-twin-universe, terminal-tester
 # Required CLIs:    amplifier-reality-check (this bundle), amplifier-digital-twin,
-#                   amplifier-gitea (if local repos), agent-browser (web apps),
-#                   tmux (terminal apps)
+#                   amplifier-gitea (if local repos) -- the first three are
+#                   auto-installed by the preflight step below if missing.
+#                   agent-browser (web apps) and tmux (terminal apps) are not.
 
 name: reality-check-pipeline
 description: >
@@ -37,6 +38,32 @@ context:
   report_previous_errors: ""
 
 steps:
+  # ------------------------------------------------------------------
+  # 0. Preflight: ensure required CLIs are installed
+  #    amplifier-digital-twin and amplifier-gitea ship as separate uv
+  #    tools, not as transitive console scripts of this bundle, so an
+  #    agent host that only has the reality-check bundle composed will
+  #    not have them on PATH. Install any that are missing up front so
+  #    the rest of the pipeline can rely on them. Idempotent: skips
+  #    anything already on PATH.
+  # ------------------------------------------------------------------
+  - id: preflight-clis
+    type: "bash"
+    command: |
+      set -e
+      ensure_cli() {
+        bin="$1"; src="$2"
+        if command -v "$bin" >/dev/null 2>&1; then
+          echo "$bin: present ($(command -v "$bin"))"
+        else
+          echo "$bin: not found, installing from $src"
+          uv tool install "$src"
+        fi
+      }
+      ensure_cli amplifier-reality-check git+https://github.com/microsoft/amplifier-bundle-reality-check@main
+      ensure_cli amplifier-digital-twin  git+https://github.com/microsoft/amplifier-bundle-digital-twin-universe@main
+      ensure_cli amplifier-gitea         git+https://github.com/microsoft/amplifier-bundle-gitea@main
+
   # ------------------------------------------------------------------
   # 1. Intent Analysis (CLI-validated convergence loop)
   #    Iterates intent-iteration.yaml (intent-analyzer + CLI validator)
