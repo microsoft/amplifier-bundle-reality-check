@@ -82,7 +82,7 @@ steps:
       above, and rewrite the file. The recipe is the authority on
       convergence -- your job is to fix what the CLI flagged and return.
     output: "report_result"
-    timeout: 900
+    timeout: 86400
 
   # ------------------------------------------------------------------
   # 2. Structural validation via the bundle CLI
