@@ -82,7 +82,7 @@ steps:
       previous_errors: "{{previous_errors}}"
     output: "iteration_result"
     parse_json: true
-    timeout: 1200
+    timeout: 86400
     on_error: "continue"
     while_condition: "{{validated}} != true"
     max_while_iterations: 3
@@ -126,7 +126,7 @@ steps:
       Validated acceptance tests for this software live at:
       {{acceptance_tests_path}}
     output: "dtu_result"
-    timeout: 1800
+    timeout: 86400
 
   # ------------------------------------------------------------------
   # 3a. Terminal Validation
@@ -164,7 +164,7 @@ steps:
       Otherwise, run every cli-type test using the DTU bridge pattern
       (amplifier-digital-twin exec <id> without --).
     output: "terminal_results"
-    timeout: 1800
+    timeout: 86400
 
   # ------------------------------------------------------------------
   # 3b. Browser Validation
@@ -205,7 +205,7 @@ steps:
       Otherwise, extract the access URL from the DTU details and run
       every browser-type test against it.
     output: "browser_results"
-    timeout: 1800
+    timeout: 86400
 
   # ------------------------------------------------------------------
   # 3c. Generic Validation (catch-all)
@@ -248,7 +248,7 @@ steps:
       Otherwise, run every `other`-type test using the DTU bridge pattern
       (amplifier-digital-twin exec <id> -- <command>).
     output: "generic_results"
-    timeout: 1200
+    timeout: 86400
 
   # ------------------------------------------------------------------
   # 4. Report (CLI-validated convergence loop)
@@ -275,7 +275,7 @@ steps:
       previous_errors: "{{report_previous_errors}}"
     output: "report_iteration_result"
     parse_json: true
-    timeout: 1500
+    timeout: 86400
     on_error: "continue"
     while_condition: "{{report_validated}} != true"
     max_while_iterations: 3
