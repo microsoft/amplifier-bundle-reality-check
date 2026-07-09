@@ -8,9 +8,18 @@ The intent-analyzer agent's ``output_path`` is polymorphic: it may be a
 single ``.yaml`` file or a directory containing one or more YAML files
 (optionally nested). Each file is independently valid against the schema.
 
-``Test.type == "other"`` is the catch-all for tests that don't fit the
-``browser`` or ``cli`` validator types -- forward-compatible for new test
-types that may be added later.
+The ``type`` field selects the validator by HOW a test is verified, not by what
+the software is:
+- ``browser`` -- drive a web UI (browser-tester).
+- ``cli`` -- drive an interactive terminal app: menus, prompts, TUI navigation,
+  keystroke flows that require reading the rendered screen (terminal-tester).
+- ``other`` -- the catch-all: non-interactive command checks (run -> exit code +
+  stdout + emitted files), HTTP probes, filesystem/process checks, library
+  imports (generic-tester). Also forward-compatible for new test types.
+
+Note ``software_type`` (suite-level: what was built) does not decide ``type``. A
+non-interactive ``software_type: cli_tool`` produces ``type: other`` tests, not
+``type: cli``.
 
 Each ``Test`` has an ``id``: an 8-char lowercase hex string that uniquely
 identifies it across the entire acceptance-tests path. IDs are auto-assigned

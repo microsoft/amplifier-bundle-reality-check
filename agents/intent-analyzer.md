@@ -104,16 +104,36 @@ If the user said "build a chat app," they implicitly expect:
 Add tests for these reasonable expectations. Be reasonable — don't invent
 requirements the user wouldn't care about.
 
-### 4. Classify the software
+### 4. Classify each test by how it is verified
 
-Determine what was built. This drives which validators handle the tests. You can pick multiple if needed.
+The per-test `type` field is not about what the software is -- it's about HOW
+that test is verified, and it decides which validator runs it.
 
-| Type | Validator | Example |
-|------|-----------|---------|
-| Web app | `browser` | Chat UI, dashboard, admin panel |
-| CLI / TUI tool | `cli` | Command-line utility, TUI app, build tool |
-| API service | `other` | REST/GraphQL endpoint |
-| Library | `other` | Python package, npm module |
+Ask one question per test: does verifying it require driving a live terminal
+session, sending keystrokes and reading the rendered screen (menus, prompts, TUI)?
+
+| Verification method | `type` | Validator | Example |
+|---------------------|--------|-----------|---------|
+| Drive a web UI | `browser` | browser-tester | Chat UI, dashboard, admin panel |
+| Drive an interactive terminal app | `cli` | terminal-tester | TUI app, menu-driven REPL, interactive prompt flow |
+| Run a command and check its result | `other` | generic-tester | `mytool --version`, batch/one-shot CLI, build tool |
+| Anything else | `other` | generic-tester | API service (REST/GraphQL endpoint), HTTP probe, file/process check, library import |
+
+**`cli` is interactive-only.** terminal-tester validates `cli` tests by spawning a
+PTY and driving it with keystrokes and screenshots. That machinery only pays off
+for genuinely interactive apps. A non-interactive command (run -> exit code +
+emitted files + stdout match) needs none of it and belongs to `other`, where
+generic-tester runs it as a plain one-shot command.
+
+**`software_type` does not decide `type`.** They are independent axes:
+`software_type` is what was built (suite-level), `type` is how a test is verified
+(per-test). In particular, `software_type: cli_tool` does not imply `type: cli` --
+a non-interactive `cli_tool` (batch or one-shot command tool) produces
+`type: other` tests.
+
+**Classify per test, not per tool.** One tool can have both: a test that walks an
+interactive wizard is `cli`; a test on the same tool that runs `tool build` and
+checks the exit code and output files is `other`.
 
 ### 5. Write acceptance tests
 
@@ -223,17 +243,25 @@ tests:
       - action: "Click send without typing anything"
         expect: "No crash, either a validation message or no-op"
 
-  - description: "CLI tool is installed and shows help"
-    type: cli
+  - description: "Interactive TUI opens and navigates its main menu"
+    type: cli   # interactive: needs keystrokes + reading the screen
     steps:
-      - action: "Run 'mytool --help'"
-        expect: "Help text with usage instructions is displayed"
+      - action: "Launch 'mytui'"
+        expect: "Main menu renders with selectable items"
+      - action: "Press the down arrow, then Enter to open the selected item"
+        expect: "The selected view opens on screen"
 
-  - description: "CLI processes a basic command"
-    type: cli
+  - description: "CLI tool is installed and reports its version"
+    type: other   # non-interactive command: run -> exit code + stdout, so other, not cli
     steps:
-      - action: "Run 'mytool run hello'"
-        expect: "Output contains a response within 30 seconds"
+      - action: "Run 'mytool --version'"
+        expect: "Exit code 0 and a version string on stdout"
+
+  - description: "Batch command produces expected output files"
+    type: other   # one-shot: exit code + emitted files
+    steps:
+      - action: "Run 'mytool build ./src'"
+        expect: "Exit code 0; build artifacts written to ./dist"
 
   - description: "API returns version info"
     type: other
