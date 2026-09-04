@@ -1,3 +1,34 @@
+# --- Dependency manifest (contract: recipe-dependency-manifest.v1) ----------
+# schema_version 2 makes this recipe portable: every `agent:` reference below
+# resolves ONLY from the declared closure here, never from the calling
+# session's agent map. A caller whose bundle does not ship reality-check's
+# agents can still run it -- including a v2 orchestrator that reaches this
+# file as a `type: recipe` step, because `schema_version` is read per recipe
+# and is never inherited from the parent.
+#
+# Self-referential by necessity: the engine never infers a source from a
+# namespace prefix, so this bundle must declare itself to supply its own
+# agents.
+#
+# Pin: `@main`, not a commit sha. Foundation fetches a ref with
+# `git clone --branch`, which accepts a branch or a tag but NOT a sha -- a
+# sha-pinned source fails preflight with "Remote branch ... not found in
+# upstream origin". The nearest tag (v0.2.1) predates the agent rewrites in
+# 874b80b/8c43390/752264c, so pinning to it would ship agents that disagree
+# with this bundle's own CLI. `@main` matches the pin this bundle already
+# uses everywhere else (bundle.md includes, the pipeline's CLI preflight),
+# and the resolver records the exact revision it read in the run manifest
+# (`resolved_revision`). Tighten this to a tag once a release carrying the
+# current agents is cut.
+schema_version: 2
+
+dependencies:
+  - source: "git+https://github.com/microsoft/amplifier-bundle-reality-check@main"
+    kind: bundle
+    required_agents:
+      - "reality-check:intent-analyzer"
+# ---------------------------------------------------------------------------
+
 # One iteration of the intent-analysis convergence loop.
 #
 # Called by reality-check-pipeline.yaml inside a `while_condition` step.
@@ -14,10 +45,16 @@
 # The validator emits human-readable text (raw pydantic errors on failure)
 # rather than JSON, so we capture combined stdout+stderr to a tempfile and
 # wrap the result in a JSON envelope ourselves for `parse_json: true`.
+#
+# Changelog:
+#   0.2.0 -- declare schema_version 2 + dependencies so this recipe resolves
+#            reality-check:intent-analyzer from its own declared closure and
+#            runs from any session bundle.
+#   0.1.0 -- initial.
 
 name: intent-iteration
 description: One pass of intent-analyzer plus CLI structural validation.
-version: 0.1.0
+version: 0.2.0
 
 context:
   spec_path: ""

@@ -1,3 +1,51 @@
+# --- Dependency manifest (contract: recipe-dependency-manifest.v1) ----------
+# schema_version 2 makes this recipe portable: every `agent:` reference below
+# resolves ONLY from the declared closure here, never from the calling
+# session's agent map. A caller whose bundle ships none of these agents can
+# still run it. The two `type: recipe` steps below carry their own manifests
+# -- `schema_version` is read per recipe, never inherited.
+#
+# ONE entry, not two. The reality-check bundle's own behavior
+# (behaviors/reality-check.yaml) already includes
+# amplifier-bundle-digital-twin-universe, so this dependency's closure
+# supplies `digital-twin-universe:dtu-profile-builder` transitively.
+# Declaring the DTU bundle a second time is rejected outright:
+#   AgentCollisionError: Agent name 'digital-twin-universe:dtu-profile-builder'
+#   is supplied by more than one dependency
+# -- collisions are never resolved by precedence, so the transitively-supplied
+# agent is listed under `required_agents` here instead.
+#
+# Self-referential by necessity: the engine never infers a source from a
+# namespace prefix, so this bundle must declare itself to supply its own
+# agents.
+#
+# Pin: `@main`, not a commit sha. Foundation fetches a ref with
+# `git clone --branch`, which accepts a branch or a tag but NOT a sha -- a
+# sha-pinned source fails preflight with "Remote branch ... not found in
+# upstream origin". The nearest tag (v0.2.1) predates the agent rewrites in
+# 874b80b/8c43390/752264c, so pinning to it would ship agents that disagree
+# with the CLI the preflight step below installs from `@main`. The resolver
+# records the exact revision it read in the run manifest
+# (`resolved_revision`). Tighten this to a tag once a release carrying the
+# current agents is cut.
+schema_version: 2
+
+dependencies:
+  - source: "git+https://github.com/microsoft/amplifier-bundle-reality-check@main"
+    kind: bundle
+    # Only the agents THIS file's own steps reference. The intent-analyzer
+    # and report agents are referenced by intent-iteration.yaml and
+    # report-iteration.yaml respectively, which declare them in their own
+    # manifests.
+    required_agents:
+      - "reality-check:terminal-tester"
+      - "reality-check:browser-tester"
+      - "reality-check:generic-tester"
+      # Supplied transitively via behaviors/reality-check.yaml's include of
+      # amplifier-bundle-digital-twin-universe -- see the note above.
+      - "digital-twin-universe:dtu-profile-builder"
+# ---------------------------------------------------------------------------
+
 # End-to-end reality check pipeline.
 #
 # Required bundles: reality-check, digital-twin-universe, terminal-tester
@@ -5,6 +53,12 @@
 #                   amplifier-gitea (if local repos) -- the first three are
 #                   auto-installed by the preflight step below if missing.
 #                   agent-browser (web apps) and tmux (terminal apps) are not.
+#
+# Changelog:
+#   0.3.0 -- declare schema_version 2 + dependencies so this recipe (and its
+#            two sub-recipes) resolve their agents from a declared closure
+#            and run from any session bundle.
+#   0.2.0 -- CLI-validated convergence loops for intent and report.
 
 name: reality-check-pipeline
 description: >
@@ -12,7 +66,7 @@ description: >
   loop), deploys software in a Digital Twin Universe environment, runs browser
   and/or terminal verification, and produces a gap analysis report with an
   HTML artifact.
-version: 0.2.0
+version: 0.3.0
 
 context:
   spec_path: ""                # Path to spec / requirements file
