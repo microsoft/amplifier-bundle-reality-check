@@ -1,0 +1,25 @@
+BASELINE VERIFICATION -- goal's 'MEASURED BEFORE LAUNCH: 5 agents, all 5 files contain <example>'
+Anchored to origin/main (remote-verifiable), NOT to local working state.
+origin/main = 683f5188cfed4e95e5feb0c2156178b5b6626ec1
+captured_at = 2026-09-07T16:52:01Z
+
+$ git ls-tree --name-only origin/main agents/
+agents/browser-tester.md
+agents/generic-tester.md
+agents/intent-analyzer.md
+agents/report.md
+agents/terminal-tester.md
+
+agent count: 5
+
+$ for f in $(git ls-tree --name-only origin/main agents/); do echo "$f: $(git show origin/main:$f | grep -c "<example>") <example>  $(git show origin/main:$f | grep -c "<commentary>") <commentary>"; done
+agents/browser-tester.md     2 <example>  2 <commentary>
+agents/generic-tester.md     2 <example>  2 <commentary>
+agents/intent-analyzer.md    2 <example>  2 <commentary>
+agents/report.md             2 <example>  2 <commentary>
+agents/terminal-tester.md    2 <example>  2 <commentary>
+
+TOTALS: 5 agents, 10 <example> blocks, 10 <commentary> blocks
+files containing >=1 <example>: 5 of 5
+
+GOAL CLAIM: '5 agents, and all 5 files contain <example>'  -> VERIFIED TRUE

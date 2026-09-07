@@ -2,42 +2,11 @@
 meta:
   name: generic-tester
   description: |
-    Catch-all validator in the reality-check pipeline. Runs acceptance tests
-    with type: other inside a Digital Twin Universe -- HTTP probes, exit-code
-    checks, non-interactive/batch CLI tools (run -> exit code + stdout +
-    emitted files), file/process state verification, and any shell-level
-    assertion that doesn't fit browser-tester (web UI) or terminal-tester
-    (interactive TUI/CLI).
+    Use for `type: other` acceptance tests -- the pipeline's catch-all validator, run inside a Digital Twin Universe: HTTP probes, exit-code checks, non-interactive/batch CLI tools (run -> exit code + stdout + emitted files), file/process state checks, and any shell-level assertion. Typically API services, workers, or filesystem effects. Pass acceptance_tests_path and the DTU environment_id in the instruction.
 
-    Use when acceptance tests have type: other -- typically API services,
-    background workers, file-system effects, or anything reducible to running
-    a command and checking its output in a DTU.
+    USE WHEN: a test reduces to running a command in a DTU and checking its output.
 
-    **Authoritative on:** shell-based verification, HTTP probes, DTU exec
-    testing, command-output validation, generic acceptance test execution
-
-    **MUST be used for:**
-    - Running type: other acceptance tests against software in a DTU
-    - HTTP endpoint verification, filesystem checks, process inspection
-
-    <example>
-    Context: Validating an HTTP API inside a DTU
-    user: 'Verify the /api/version endpoint returns a version string'
-    assistant: 'I'll delegate to generic-tester to run the HTTP probe inside the DTU and verify the response.'
-    <commentary>
-    Runs type: other tests via amplifier-digital-twin exec inside the DTU.
-    Pass acceptance_tests_path and DTU environment_id in the instruction.
-    </commentary>
-    </example>
-
-    <example>
-    Context: Mixed test suite, only `other`-type tests remain
-    user: 'Run the generic verification pass against the DTU'
-    assistant: 'I'll use generic-tester to cover the type: other tests in the acceptance suite against the DTU.'
-    <commentary>
-    Recursively discovers all type: other tests from a directory of YAML files.
-    </commentary>
-    </example>
+    DO NOT USE WHEN: the target is a web UI (browser-tester) or an interactive TUI/CLI (terminal-tester).
 model_role: [coding, general]
 ---
 

@@ -1,0 +1,178 @@
+  - reality-check:browser-tester: Browser-based acceptance test orchestrator in the reality-check pipeline.
+Delegates type: browser tests (produced by intent-analyzer) to the
+vision-capable browser-operator agent for visual web UI verification.
+
+Use PROACTIVELY when the user wants to verify a web application's UI
+works, test a deployed app, or do browser-based smoke testing against
+any accessible URL.
+
+**Authoritative on:** browser testing, web UI verification, end-to-end
+browser-based smoke testing, acceptance test orchestration
+
+**MUST be used for:**
+- Verifying web UIs work after deployment or launch
+- Browser-based smoke testing of web applications
+- End-to-end validation of user-facing web flows
+
+<example>
+Context: User wants to verify a web app works
+user: 'Verify the UI at http://10.119.176.42:8080 works'
+assistant: 'I'll delegate to browser-tester to open the app and verify the web UI with a real browser.'
+<commentary>
+Use the runner-internal URL (container_ip + container_port) -- localhost
+from inside the runner does NOT reach the SUT.
+</commentary>
+</example>
+
+<example>
+Context: User wants to test a form flow
+user: 'Test the login form on our staging site'
+assistant: 'I'll use browser-tester to navigate to the login form, fill credentials, submit, and verify the result.'
+<commentary>
+Works with any web app -- not tied to a specific hosting mechanism.
+</commentary>
+</example>
+
+  - reality-check:generic-tester: Catch-all validator in the reality-check pipeline. Runs acceptance tests
+with type: other inside a Digital Twin Universe -- HTTP probes, exit-code
+checks, non-interactive/batch CLI tools (run -> exit code + stdout +
+emitted files), file/process state verification, and any shell-level
+assertion that doesn't fit browser-tester (web UI) or terminal-tester
+(interactive TUI/CLI).
+
+Use when acceptance tests have type: other -- typically API services,
+background workers, file-system effects, or anything reducible to running
+a command and checking its output in a DTU.
+
+**Authoritative on:** shell-based verification, HTTP probes, DTU exec
+testing, command-output validation, generic acceptance test execution
+
+**MUST be used for:**
+- Running type: other acceptance tests against software in a DTU
+- HTTP endpoint verification, filesystem checks, process inspection
+
+<example>
+Context: Validating an HTTP API inside a DTU
+user: 'Verify the /api/version endpoint returns a version string'
+assistant: 'I'll delegate to generic-tester to run the HTTP probe inside the DTU and verify the response.'
+<commentary>
+Runs type: other tests via amplifier-digital-twin exec inside the DTU.
+Pass acceptance_tests_path and DTU environment_id in the instruction.
+</commentary>
+</example>
+
+<example>
+Context: Mixed test suite, only `other`-type tests remain
+user: 'Run the generic verification pass against the DTU'
+assistant: 'I'll use generic-tester to cover the type: other tests in the acceptance suite against the DTU.'
+<commentary>
+Recursively discovers all type: other tests from a directory of YAML files.
+</commentary>
+</example>
+
+  - reality-check:intent-analyzer: Reads user interactions (spec, conversation history, feedback) and produces
+structured acceptance tests. This is the "what does done mean?" agent —
+first stage of the reality-check pipeline, before any validators run.
+
+Use PROACTIVELY when you need to translate what a user wanted into concrete,
+testable acceptance tests that pipeline validators (terminal-tester,
+browser-tester, generic-tester) can execute.
+
+**Authoritative on:** user intent extraction, acceptance test derivation,
+verification planning, translating requirements into testable steps
+
+**MUST be used for:**
+- Extracting acceptance tests from user specs and conversations
+- Determining what "done" means for a piece of built software
+- Producing structured test lists (type: browser, cli, other) for validators
+
+<example>
+Context: A resolver built a web app and needs to verify it
+user: 'Analyze what the user wanted and produce acceptance tests'
+assistant: 'I'll delegate to intent-analyzer to derive structured acceptance tests from the conversation history.'
+<commentary>
+Pass context_depth=all and an output path. The agent decides single-file
+or directory output based on complexity.
+</commentary>
+</example>
+
+<example>
+Context: Called early, before software exists
+user: 'What should we verify once this is built?'
+assistant: 'I'll use intent-analyzer to derive acceptance tests from the conversation, flagging unknowns as assumptions.'
+<commentary>
+No file paths needed — derives tests purely from conversation history.
+</commentary>
+</example>
+
+  - reality-check:report: Final stage of the reality-check pipeline. Collects structured results from
+terminal-tester, browser-tester, and generic-tester, then writes a single
+report.raw.yaml. The pipeline runs amplifier-reality-check validate-report
+after this agent to produce the canonical report.yaml and report.html.
+
+Use after all validators have completed. Pass acceptance_tests_path,
+output_dir, and validator result tables in the delegation instruction.
+
+**Authoritative on:** structuring validator results into the raw report
+schema, test-ID matching, pass/fail normalization
+
+**MUST be used for:**
+- Producing report.raw.yaml from any combination of validator results
+- Consolidating browser, terminal, and generic tester outputs into one file
+
+<example>
+Context: All validators completed; first attempt at the report.
+user: 'Produce the reality check report'
+assistant: 'I'll delegate to the report agent to consolidate validator results into report.raw.yaml.'
+<commentary>
+Embed validator result tables in the instruction as labeled blocks
+(--- name results --- ... --- end name results ---). The agent matches
+rows to acceptance tests by ID and writes only a top-level results: key.
+</commentary>
+</example>
+
+<example>
+Context: Retry; previous attempt failed CLI validation.
+user: 'Retry the report'
+assistant: 'I'll re-run the report agent with previous_errors populated so it can fix the structural issue.'
+<commentary>
+Drop unknown top-level keys (e.g. verdict) from report.raw.yaml on retry.
+</commentary>
+</example>
+
+  - reality-check:terminal-tester: Terminal-based acceptance test validator in the reality-check pipeline.
+Covers type: cli tests (produced by intent-analyzer) by using
+terminal_inspector to spawn and drive interactive terminal (TUI/CLI)
+applications inside Digital Twin Universe environments. Non-interactive
+command checks (run -> exit code + stdout + emitted files) are type: other
+and handled by generic-tester, not here.
+
+Use PROACTIVELY when the user wants to verify an interactive terminal
+application works: menus, prompts, TUI navigation, or keystroke-driven flows
+inside a DTU.
+
+**Authoritative on:** terminal testing, CLI/TUI verification, end-to-end
+terminal-based smoke testing, acceptance-test-driven terminal validation
+
+**MUST be used for:**
+- Verifying interactive TUI/CLI apps work after deployment or launch in a DTU
+- Driving menus, prompts, and keystroke flows and verifying the rendered screen
+- End-to-end validation of interactive terminal user flows
+
+<example>
+Context: User wants to verify a CLI tool works in a DTU
+user: 'Verify the codex CLI works inside the DTU'
+assistant: 'I'll delegate to terminal-tester to spawn the CLI inside the DTU and verify its output.'
+<commentary>
+Terminal verification against any DTU environment.
+</commentary>
+</example>
+
+<example>
+Context: User wants to test a TUI application flow
+user: 'Test the interactive menu in my app inside the DTU'
+assistant: 'I'll use terminal-tester to launch the TUI via DTU exec, interact with it, and verify the results.'
+<commentary>
+Works with any terminal app inside a DTU -- TUI or CLI.
+</commentary>
+</example>

@@ -1,0 +1,10 @@
+
+
+===== PER-AGENT CATALOG BYTES =====
+reality-check:browser-tester               desc_chars= 1374  catalog_bytes= 1408
+reality-check:generic-tester               desc_chars= 1622  catalog_bytes= 1656
+reality-check:intent-analyzer              desc_chars= 1520  catalog_bytes= 1559
+reality-check:report                       desc_chars= 1509  catalog_bytes= 1535
+reality-check:terminal-tester              desc_chars= 1574  catalog_bytes= 1609
+JOIN newlines (n-1)                                            catalog_bytes=    4
+TOTAL CATALOG BLOCK                                            catalog_bytes= 7771

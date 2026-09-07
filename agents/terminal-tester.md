@@ -2,42 +2,11 @@
 meta:
   name: terminal-tester
   description: |
-    Terminal-based acceptance test validator in the reality-check pipeline.
-    Covers type: cli tests (produced by intent-analyzer) by using
-    terminal_inspector to spawn and drive interactive terminal (TUI/CLI)
-    applications inside Digital Twin Universe environments. Non-interactive
-    command checks (run -> exit code + stdout + emitted files) are type: other
-    and handled by generic-tester, not here.
+    Use for `type: cli` acceptance tests -- driving interactive terminal applications (menus, prompts, TUI navigation, keystroke-driven flows) inside a Digital Twin Universe via terminal_inspector, and verifying the rendered screen.
 
-    Use PROACTIVELY when the user wants to verify an interactive terminal
-    application works: menus, prompts, TUI navigation, or keystroke-driven flows
-    inside a DTU.
+    USE WHEN: an interactive TUI/CLI must be verified end-to-end after deployment or launch in a DTU.
 
-    **Authoritative on:** terminal testing, CLI/TUI verification, end-to-end
-    terminal-based smoke testing, acceptance-test-driven terminal validation
-
-    **MUST be used for:**
-    - Verifying interactive TUI/CLI apps work after deployment or launch in a DTU
-    - Driving menus, prompts, and keystroke flows and verifying the rendered screen
-    - End-to-end validation of interactive terminal user flows
-
-    <example>
-    Context: User wants to verify a CLI tool works in a DTU
-    user: 'Verify the codex CLI works inside the DTU'
-    assistant: 'I'll delegate to terminal-tester to spawn the CLI inside the DTU and verify its output.'
-    <commentary>
-    Terminal verification against any DTU environment.
-    </commentary>
-    </example>
-
-    <example>
-    Context: User wants to test a TUI application flow
-    user: 'Test the interactive menu in my app inside the DTU'
-    assistant: 'I'll use terminal-tester to launch the TUI via DTU exec, interact with it, and verify the results.'
-    <commentary>
-    Works with any terminal app inside a DTU -- TUI or CLI.
-    </commentary>
-    </example>
+    DO NOT USE WHEN: the check is a non-interactive command (run -> exit code + stdout + emitted files) -- that is `type: other` and belongs to generic-tester, not here. Web UIs go to browser-tester.
 model_role: [coding, general]
 tools: [terminal_inspector]
 ---

@@ -2,40 +2,11 @@
 meta:
   name: browser-tester
   description: |
-    Browser-based acceptance test orchestrator in the reality-check pipeline.
-    Delegates type: browser tests (produced by intent-analyzer) to the
-    vision-capable browser-operator agent for visual web UI verification.
+    Use for `type: browser` acceptance tests in the reality-check pipeline -- verifying a web UI actually works: a deployed app, a form or login flow, or browser-based smoke testing against any accessible URL. Delegates to the vision-capable browser-operator agent; works with any web app, any hosting.
 
-    Use PROACTIVELY when the user wants to verify a web application's UI
-    works, test a deployed app, or do browser-based smoke testing against
-    any accessible URL.
+    USE WHEN: acceptance tests carry `type: browser`, or a user-facing web flow needs end-to-end validation after deployment or launch.
 
-    **Authoritative on:** browser testing, web UI verification, end-to-end
-    browser-based smoke testing, acceptance test orchestration
-
-    **MUST be used for:**
-    - Verifying web UIs work after deployment or launch
-    - Browser-based smoke testing of web applications
-    - End-to-end validation of user-facing web flows
-
-    <example>
-    Context: User wants to verify a web app works
-    user: 'Verify the UI at http://10.119.176.42:8080 works'
-    assistant: 'I'll delegate to browser-tester to open the app and verify the web UI with a real browser.'
-    <commentary>
-    Use the runner-internal URL (container_ip + container_port) -- localhost
-    from inside the runner does NOT reach the SUT.
-    </commentary>
-    </example>
-
-    <example>
-    Context: User wants to test a form flow
-    user: 'Test the login form on our staging site'
-    assistant: 'I'll use browser-tester to navigate to the login form, fill credentials, submit, and verify the result.'
-    <commentary>
-    Works with any web app -- not tied to a specific hosting mechanism.
-    </commentary>
-    </example>
+    DO NOT USE WHEN: the target is an interactive TUI/CLI (terminal-tester), or a non-interactive command, HTTP probe, or filesystem check (generic-tester).
 model_role: [vision, general]
 provider_preferences:
   - provider: anthropic
