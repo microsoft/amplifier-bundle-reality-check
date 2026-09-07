@@ -10,10 +10,19 @@ the authority's arithmetic (`0 runs x 0 arms x $0 / 1.00 = $0.00`, slack `$0.00`
 
 ---
 
-## 0. Terminal state, and the one deviation from the Procedure
+## 0. Terminal state — OUTCOME BRANCH C
 
-**OUTCOME: branch A deliverables are DONE — but the work item could not be claimed by this
-lane, and that is a defect in the goal, not a blocker.**
+**Terminal state: `BLOCKED` (branch C) — and every engineering deliverable is DONE and shipped
+in draft PR #15.** Those two sentences are both true; `BLOCKED.md` in this directory exists to
+stop the second one being lost behind the first.
+
+**Correction, recorded once.** An earlier draft of this lane's marker labelled the outcome
+branch **A** and coined the terminal state `delivered_unresolved_shared_item`. That was wrong
+twice: branch A requires the work item to be **resolved**, which it is not and cannot be by this
+lane; and the goal explicitly forbids inventing vocabulary (*"Do not invent a vocabulary word
+for it"*). The terminal state is the goal's own word, **BLOCKED**, chosen once and not
+revisited. See `BLOCKED.md` for the full branch-C reasoning, including the one C conjunct
+(`work_release`) that is not executable from this state and is named rather than skipped.
 
 `work_claim(project="model_performance", item_id="model_performance-kp79")` was the first
 action of this lane. It was **refused**:
@@ -39,25 +48,26 @@ One item, four claimants. **Three of the four are guaranteed to be refused.** Pr
 says a refused claim means write `BLOCKED.md` and stop; OUTCOME branch C lists "a refused
 claim" as a branch-C reason.
 
-**I did not take branch C, deliberately, and here is the reasoning.**
+**Why branch C, and what it does and does not mean.**
 
-1. Branch C's own definition is *"the outcome is unreachable"*. The outcome here is five text
-   edits inside this worktree plus a draft PR — **$0, no dependency on the tracker**. It was
-   never unreachable. Writing `BLOCKED.md` would have been a false statement about a
-   reachable outcome, and would have left this repo's 5 catalog entries unfixed for a
-   bookkeeping reason.
-2. Branch C's remedy is `work_release`, which the goal itself says must be done *"while you
-   still HOLD the item"*. This lane never held it and cannot release it. **The prescribed
-   branch-C procedure is not executable from this state** — which is itself the proof that
-   branch C was not written for "a sibling lane holds the shared item".
-3. The goal anticipates exactly this class of problem and tells me what to do with it:
+1. Branch A needs **two** conjuncts — item resolved **AND** deliverables exist as a draft PR.
+   The second holds (PR #15); the first is unreachable by this lane. So the outcome *as the
+   goal defines it* was not fully reached, and the goal names the reason — **a refused claim** —
+   under branch C. Branch C it is.
+2. Branch C is **not** "no work landed". The engineering deliverables are complete, verified,
+   and merged-ready. `BLOCKED.md` leads with exactly that so the label cannot be misread.
+3. Branch C's own remedy, `work_release`, is **not executable** here: the goal requires
+   releasing *"while you still HOLD the item"*, and this lane never held it. Neither A nor C is
+   cleanly satisfiable — that is the defect, and the unmet conjunct is named in `BLOCKED.md`
+   rather than quietly skipped.
+4. The goal anticipates exactly this class of problem and tells me what to do with it:
    *"every option this goal offers you must have at least one target inside the paths it says
    you own … that is a DEFECT IN THIS GOAL, not a task. Report it against the goal, ship the
    patch as an artifact under your ARTIFACT ROOT."* The only way for me to satisfy branch A's
    first conjunct (`work_resolve`) is to mutate an item held by another live session — outside
    my paths. So: **reported, patch shipped, work done.**
-4. `SCOPE-OUTS`: *"No waiting on any human decision: choose, record the choice in your lane's
-   DONE-NOTE.md, continue."* Chosen once, recorded here, not revisited.
+5. `SCOPE-OUTS`: *"No waiting on any human decision: choose, record the choice in your lane's
+   DONE-NOTE.md, continue."* Chosen, recorded here and in `BLOCKED.md`, and not revisited.
 
 **What the manager must do:** `model_performance-kp79` is resolvable **exactly once**, by
 whichever lane holds it, and its resolution must cover all four repos. This lane's
@@ -67,6 +77,45 @@ from this lane as incomplete work.**
 **Goal-defect to fix before the next multi-repo sweep:** either give each repo its own work
 item, or state in the goal that only the holding lane resolves and siblings report through
 their `DONE.json`. As written, the goal makes 3-of-4 lanes look blocked when all four are fine.
+
+---
+
+## 0b. BASELINE — the goal's pre-launch measurement, verified
+
+The goal states: *"**MEASURED BEFORE LAUNCH (verify, do not re-derive):** **5 agents, and all 5
+files contain `<example>`.**"* Verification was this lane's **second action, before any edit**
+(working tree clean at `683f518`). It is re-anchored here to `origin/main` so any reader can
+reproduce it without trusting this lane's local state:
+
+```
+$ git rev-parse origin/main
+683f5188cfed4e95e5feb0c2156178b5b6626ec1
+
+$ for f in $(git ls-tree --name-only origin/main agents/); do \
+    echo "$f: $(git show origin/main:$f | grep -c '<example>') <example>  \
+                $(git show origin/main:$f | grep -c '<commentary>') <commentary>"; done
+
+agents/browser-tester.md     2 <example>  2 <commentary>
+agents/generic-tester.md     2 <example>  2 <commentary>
+agents/intent-analyzer.md    2 <example>  2 <commentary>
+agents/report.md             2 <example>  2 <commentary>
+agents/terminal-tester.md    2 <example>  2 <commentary>
+
+TOTALS: 5 agents, 10 <example> blocks, 10 <commentary> blocks
+files containing >=1 <example>: 5 of 5
+```
+
+**GOAL CLAIM `"5 agents, and all 5 files contain <example>"` → VERIFIED TRUE**, and matched the
+pre-edit measurement exactly (2 per file × 5 = 10).
+
+Committed as `evidence/baseline-BEFORE-example-counts.txt`. It is anchored to a remote ref, so
+it stays reproducible after this branch merges — unlike a claim that only lives in prose.
+
+**Gap this closes, stated plainly:** the baseline *was* measured before the work and its numbers
+*were* quoted (§5, §6), but until now only as prose conclusions — the raw command and output
+were never captured as an evidence artifact the way `catalog-BEFORE.txt` was. That was an
+artifact-discipline gap in a lane whose whole subject is honest measurement, and it is fixed
+here rather than argued away.
 
 ---
 
