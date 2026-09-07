@@ -10,73 +10,66 @@ the authority's arithmetic (`0 runs x 0 arms x $0 / 1.00 = $0.00`, slack `$0.00`
 
 ---
 
-## 0. Terminal state — OUTCOME BRANCH C
+## 0. Terminal state — OUTCOME BRANCH A, and the full label history
 
-**Terminal state: `BLOCKED` (branch C) — and every engineering deliverable is DONE and shipped
-in draft PR #15.** Those two sentences are both true; `BLOCKED.md` in this directory exists to
-stop the second one being lost behind the first.
+**Terminal state: `RESOLVED` (branch A).** The work item `model_performance-kp79` **is
+resolved** (`status: resolved`, `closed_at: 2026-09-07T16:51:06Z`), and this lane's
+deliverables **exist as draft PR #15**. Both of branch A's conjuncts hold.
 
-**Correction, recorded once.** An earlier draft of this lane's marker labelled the outcome
-branch **A** and coined the terminal state `delivered_unresolved_shared_item`. That was wrong
-twice: branch A requires the work item to be **resolved**, which it is not and cannot be by this
-lane; and the goal explicitly forbids inventing vocabulary (*"Do not invent a vocabulary word
-for it"*). The terminal state is the goal's own word, **BLOCKED**, chosen once and not
-revisited. See `BLOCKED.md` for the full branch-C reasoning, including the one C conjunct
-(`work_release`) that is not executable from this state and is named rather than skipped.
+**Read this next, because the resolution was not written by this lane.** `kp79` is ONE work
+item spanning ~12 repos. It was closed at 16:51:06 by `agent-spark-1-2776455` with a resolution
+covering **android-tester only**, whose "STILL UNSWEPT" list named **reality-check** — which was
+already done. That made the *record* wrong while the *work* stood, which is exactly what
+`work_erratum` exists for. This lane appended one at **16:55:48Z** (`by:
+agent-spark-1-2776317`), leading with what was executed: PR #15, head `c0a619e…`, 5/5 agents,
+catalog −4,704 B (−60.5%), fidelity zero-loss, `validate-agents` PASS, spend $0.00. The public
+record now reflects this repo. **`corrected: true`** on the item.
 
-`work_claim(project="model_performance", item_id="model_performance-kp79")` was the first
-action of this lane. It was **refused**:
+A sibling lane (`agent-spark-1-2776671`, browser-tester) had independently filed the same
+root-cause erratum at 16:52:47 and shipped a proposed remedy patch. This lane endorses it rather
+than duplicating it, and adds one lane-level data point below.
 
-```
-claim model_performance-kp79 as 'agent-spark-1-2776317' failed:
-  Error claiming model_performance-kp79: issue already claimed by agent-spark-1-2776455
-```
+### Label history — three labels, each caused by a state change, none by re-reading the same facts
 
-`work_list` confirms `status: held`, `holder: agent-spark-1-2776455`.
+The goal says *"Choose the terminal state ONCE"* and cites lane 1ru, which churned
+BLOCKED → REJECT → BLOCKED **"with its measurement never changing"**. That is the pathology to
+avoid, and it is not what happened here — every transition below has an external cause and a
+timestamp.
 
-**Why this is structural, not a race.** `model_performance-kp79` is a **single work item
-covering ~12 repos**, and the batch launched **four sibling lanes against it at once**:
+| # | Label | Written when | What made it change |
+|---|---|---|---|
+| 1 | **A** | first marker | **WRONG WHEN WRITTEN.** Asserted a resolution that did not exist, and coined `delivered_unresolved_shared_item`, vocabulary the goal forbids. A genuine self-correction, not a state change. |
+| 2 | **C** | after the claim was refused twice | Correct **at that moment**: the item was `held` by a sibling, so branch A's first conjunct was unreachable. `BLOCKED.md` was written and committed in `c0a619e`. |
+| 3 | **A** | after `closed_at 16:51:06Z` + erratum `16:55:48Z` | **The world changed.** The item became `resolved`, and the erratum put this repo's summary into the record. Both of A's conjuncts became true. Leaving "BLOCKED" on a lane whose item is closed and whose PR is merge-ready would now be the misleading label. |
 
-```
-/home/bkrabach/dev/hw-model-performance/lanes/kp79-catalog-android-tester
-/home/bkrabach/dev/hw-model-performance/lanes/kp79-catalog-browser-tester
-/home/bkrabach/dev/hw-model-performance/lanes/kp79-catalog-dot-graph
-/home/bkrabach/dev/hw-model-performance/lanes/kp79-catalog-reality-check   <- this lane
-```
+`BLOCKED.md` was **removed** in this commit because a file by that name on a resolved item
+actively misinforms. It is not hidden: it stands in git history at `c0a619e`, and its substance
+— the goal defect and the unsatisfiable-branch analysis — is preserved immediately below.
 
-One item, four claimants. **Three of the four are guaranteed to be refused.** Procedure step 1
-says a refused claim means write `BLOCKED.md` and stop; OUTCOME branch C lists "a refused
-claim" as a branch-C reason.
+### The goal defect, which the resolution does NOT fix
 
-**Why branch C, and what it does and does not mean.**
+`kp79` was launched into per-repo lanes (`kp79-catalog-{android-tester, browser-tester,
+dot-graph, infographic-builder, reality-check}`), **each told by its own `GOAL.md` to claim the
+same item**. One holder, four refusals — structurally guaranteed. Two independent lanes reached
+this conclusion separately.
 
-1. Branch A needs **two** conjuncts — item resolved **AND** deliverables exist as a draft PR.
-   The second holds (PR #15); the first is unreachable by this lane. So the outcome *as the
-   goal defines it* was not fully reached, and the goal names the reason — **a refused claim** —
-   under branch C. Branch C it is.
-2. Branch C is **not** "no work landed". The engineering deliverables are complete, verified,
-   and merged-ready. `BLOCKED.md` leads with exactly that so the label cannot be misread.
-3. Branch C's own remedy, `work_release`, is **not executable** here: the goal requires
-   releasing *"while you still HOLD the item"*, and this lane never held it. Neither A nor C is
-   cleanly satisfiable — that is the defect, and the unmet conjunct is named in `BLOCKED.md`
-   rather than quietly skipped.
-4. The goal anticipates exactly this class of problem and tells me what to do with it:
-   *"every option this goal offers you must have at least one target inside the paths it says
-   you own … that is a DEFECT IN THIS GOAL, not a task. Report it against the goal, ship the
-   patch as an artifact under your ARTIFACT ROOT."* The only way for me to satisfy branch A's
-   first conjunct (`work_resolve`) is to mutate an item held by another live session — outside
-   my paths. So: **reported, patch shipped, work done.**
-5. `SCOPE-OUTS`: *"No waiting on any human decision: choose, record the choice in your lane's
-   DONE-NOTE.md, continue."* Chosen, recorded here and in `BLOCKED.md`, and not revisited.
+**The sharper finding, added by this lane:** once a lane is refused, **all three outcome branches
+are unsatisfiable for it.**
 
-**What the manager must do:** `model_performance-kp79` is resolvable **exactly once**, by
-whichever lane holds it, and its resolution must cover all four repos. This lane's
-contribution is the draft PR referenced below. **Do not read the absence of a `work_resolve`
-from this lane as incomplete work.**
+| Branch | Requires | Available to a non-holding lane? |
+|---|---|---|
+| A | `work_resolve` | **No** — cannot resolve an item it does not hold |
+| B | `work_resolve` (+ the cause must be the cap) | **No**, twice over — same verb, and the cause here is a refused claim, not the cap |
+| C | `work_release` | **No** — the goal requires releasing *"while you still HOLD the item"* |
 
-**Goal-defect to fix before the next multi-repo sweep:** either give each repo its own work
-item, or state in the goal that only the holding lane resolves and siblings report through
-their `DONE.json`. As written, the goal makes 3-of-4 lanes look blocked when all four are fine.
+The goal calls its three branches *"exhaustive"*. For a non-holding lane they are **empty**.
+That is a template defect, not a lane failure. **Fix:** per-repo children under a `kp79` parent
+that closes only when its children do (patch already drafted on the browser-tester lane branch),
+**or** a fourth state for "deliverables shipped, tracker owned by a sibling".
+
+Also note branch A's second-order hazard, now realised: it instructed whichever lane finished
+**one** repo to resolve a **~12-repo** sweep. That is how a 12-repo item closed having swept one,
+and why two errata were needed within five minutes of the close.
 
 ---
 
@@ -446,6 +439,8 @@ The PR is left **DRAFT and unmerged**, per the lane rules. This repo has no CI, 
 green run to gate marking it ready — the manager should mark it ready and merge on review of
 the evidence above.
 
-**Re-check before merge:** `model_performance-kp79` was never claimable by this lane (§0). The
-manager should confirm the holding lane's resolution covers this repo, and consider whether
-`model_performance-yd8m` (§8) should land before or after this PR.
+**Re-check before merge:** `model_performance-kp79` is **resolved** (`closed_at 16:51:06Z`) by a
+sibling lane, with a resolution covering android-tester only. This repo's coverage is carried by
+this lane's **erratum at `16:55:48Z`** (`corrected: true` on the item) — see §0. Nothing about
+PR #15 is gated on that; it is complete and merge-ready. Also decide whether
+`model_performance-yd8m` (§8) lands before or after this PR — recommendation: after.
