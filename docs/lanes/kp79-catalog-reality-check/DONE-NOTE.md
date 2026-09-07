@@ -481,3 +481,53 @@ sibling lane, with a resolution covering android-tester only. This repo's covera
 this lane's **erratum at `16:55:48Z`** (`corrected: true` on the item) — see §0. Nothing about
 PR #15 is gated on that; it is complete and merge-ready. Also decide whether
 `model_performance-yd8m` (§8) lands before or after this PR — recommendation: after.
+
+---
+
+## 11. LANDED — the merge happened, verified on `origin/main`
+
+**PR #15 was squash-merged by the manager at `2026-09-07T16:58:08Z` as
+[`865c3ee`](https://github.com/microsoft/amplifier-bundle-reality-check/commit/865c3eef29c0854da44b2274cbacbc96656b2b96).**
+The landing stage described in §0c completed exactly as the goal said it would — *"the MERGE IS
+THE MANAGER'S NEXT STAGE"* — and this lane never merged anything, per Procedure 4.
+
+Verified against `origin/main`, not asserted:
+
+```
+$ for f in $(git ls-tree --name-only origin/main agents/); do
+    echo "$f: $(git show origin/main:$f | grep -c '<example>') <example>"; done
+
+agents/browser-tester.md: 0 <example>
+agents/generic-tester.md: 0 <example>
+agents/intent-analyzer.md: 0 <example>
+agents/report.md: 0 <example>
+agents/terminal-tester.md: 0 <example>
+```
+
+All five agent files on `origin/main` are **byte-identical** to this branch's `0fbb96c`
+versions, and every lane artifact (`DONE-NOTE.md`, `evidence/`, `render_catalog.py`) is on main.
+**The −4,704 byte catalog reduction is live.**
+
+### One thing I got wrong, recorded rather than quietly dropped
+
+After the merge, `publication_readback.sh` returned `head_sha 0fbb96c` while `git rev-parse HEAD`
+said `174c300`. I initially diagnosed that as a **readback race that could mint a conforming-but-
+wrong marker**, and was one step from filing it as a tooling defect. **It is not a defect.**
+`publication_readback.sh:127` deliberately overwrites the `ls-remote` sha with the PR's
+`headRefOid`; for a *merged* PR that is correctly frozen at the merged head. The invariant I
+asserted — `readback == local HEAD` — is simply the wrong invariant once a branch receives a
+commit after its PR merges. The marker's `head_sha` is `0fbb96c`, the commit that actually
+merged, which is what the publication contract wants.
+
+The cross-check that surfaced it was still the right move; only my conclusion was wrong. *An
+exit code is not verification; the content is* — and neither is a plausible diagnosis.
+
+### Note for the manager
+
+Squash-merge means **no lane commit is an ancestor of `origin/main`** (`19e5fd1`, `f759f1a`,
+`c0a619e`, `0fbb96c` all report `NOT in origin/main`) even though their content is. Any
+orphan-commit audit keyed on ancestry rather than content will flag this lane — and every other
+squash-merged lane — as orphaned. The content check above is the one that answers the question.
+
+This section and §0c post-date the merge and are offered as a small follow-up; the substantive
+deliverables all landed in `865c3ee`.
