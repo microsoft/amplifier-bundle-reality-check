@@ -32,9 +32,7 @@ def run_cli(*args: str, timeout: int = 30) -> subprocess.CompletedProcess[str]:
     )
 
 
-def run_cli_json(
-    *args: str, **kwargs
-) -> tuple[dict, subprocess.CompletedProcess[str]]:
+def run_cli_json(*args: str, **kwargs) -> tuple[dict, subprocess.CompletedProcess[str]]:
     """Run a command, assert success, parse JSON from stdout."""
     result = run_cli(*args, **kwargs)
     assert result.returncode == 0, (
