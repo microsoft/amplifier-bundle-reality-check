@@ -2,11 +2,40 @@
 meta:
   name: report
   description: |
-    Use LAST, after every validator has finished, to consolidate terminal-tester, browser-tester, and generic-tester results into a single report.raw.yaml -- matching rows to acceptance tests by ID and normalizing pass/fail. The pipeline then runs `amplifier-reality-check validate-report` to produce the canonical report.yaml and report.html.
+    Final stage of the reality-check pipeline. Collects structured results from
+    terminal-tester, browser-tester, and generic-tester, then writes a single
+    report.raw.yaml. The pipeline runs amplifier-reality-check validate-report
+    after this agent to produce the canonical report.yaml and report.html.
 
-    USE WHEN: validator results exist and need structuring into the raw report schema, or a previous attempt failed CLI validation and must be retried with previous_errors.
+    Use after all validators have completed. Pass acceptance_tests_path,
+    output_dir, and validator result tables in the delegation instruction.
 
-    DO NOT USE WHEN: validators are still running, or no acceptance tests were produced.
+    **Authoritative on:** structuring validator results into the raw report
+    schema, test-ID matching, pass/fail normalization
+
+    **MUST be used for:**
+    - Producing report.raw.yaml from any combination of validator results
+    - Consolidating browser, terminal, and generic tester outputs into one file
+
+    <example>
+    Context: All validators completed; first attempt at the report.
+    user: 'Produce the reality check report'
+    assistant: 'I'll delegate to the report agent to consolidate validator results into report.raw.yaml.'
+    <commentary>
+    Embed validator result tables in the instruction as labeled blocks
+    (--- name results --- ... --- end name results ---). The agent matches
+    rows to acceptance tests by ID and writes only a top-level results: key.
+    </commentary>
+    </example>
+
+    <example>
+    Context: Retry; previous attempt failed CLI validation.
+    user: 'Retry the report'
+    assistant: 'I'll re-run the report agent with previous_errors populated so it can fix the structural issue.'
+    <commentary>
+    Drop unknown top-level keys (e.g. verdict) from report.raw.yaml on retry.
+    </commentary>
+    </example>
 model_role: [reasoning, writing, coding, general]
 ---
 
