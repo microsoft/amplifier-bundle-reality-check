@@ -13,6 +13,7 @@ parse / IO / discovery failures use synthesized dicts with distinct
 """
 
 import json
+from importlib.metadata import version as installed_version
 from pathlib import Path
 
 from helpers import run_cli, run_cli_json
@@ -37,9 +38,14 @@ def _has_error(errors: list[dict], type_: str, loc: list | None = None) -> bool:
 
 
 def test_version():
+    # Assert against the PACKAGED version, never a literal. `cli.main` uses
+    # `click.version_option(package_name=...)`, which reads installed metadata,
+    # so a hard-coded string here goes stale on the next version bump and
+    # reports a green suite as red for no reason. It did: this asserted "0.1.0"
+    # against a package at 0.2.0.
     result = run_cli("--version")
     assert result.returncode == 0
-    assert "0.1.0" in result.stdout
+    assert installed_version("amplifier-bundle-reality-check") in result.stdout
 
 
 def test_help_lists_commands():
