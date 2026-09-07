@@ -1,0 +1,8 @@
+
+=== GOAL.md -- CONTRADICTIONS (2) ===
+[TITLE_ASSERTS_FORBIDDEN_STATE] line 1, line 51
+    The title states '<example>' is present, but the document forbids it (first at line 51). These cannot both hold; a reviewer enforcing the title will read the lane as having shipped the opposite of the deliverable. Name the CHANGE in the title, imperative -- put any baseline in a labelled parenthetical.
+[TERMINAL_BAR_IS_A_RACE] line 20, line 8
+    The terminal bar is a PRESENT STATE ('deliverables exist as a draft PR') while line 8 instructs another actor to merge. Merging is irreversible, so the instructed next stage permanently falsifies the bar and the lane's compliance window is bounded by an event it does not control. State the bar historically: 'were demonstrated and shipped for landing'.
+
+GOAL LINT  files=1  findings=2

@@ -1,0 +1,4 @@
+
+=== /tmp/goal_fixed.md -- clean (0) ===
+
+GOAL LINT  files=1  findings=0
