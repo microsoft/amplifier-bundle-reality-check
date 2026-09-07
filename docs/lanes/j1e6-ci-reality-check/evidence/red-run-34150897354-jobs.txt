@@ -1,0 +1,5 @@
+failure	Tests — Python 3.11	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34150897354/job/101832775487
+failure	Tests — Python 3.13	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34150897354/job/101832775664
+failure	Tests — Python 3.12	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34150897354/job/101832775700
+success	Lint (ruff 0.15.11)	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34150897354/job/101832775743
+success	Bundle structure	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34150897354/job/101832775762

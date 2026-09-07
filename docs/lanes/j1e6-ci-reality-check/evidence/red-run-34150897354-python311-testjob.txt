@@ -1,0 +1,26 @@
+[Run tests] ﻿2026-09-07T18:15:47.1110021Z ##[group]Run uv run --no-sync pytest tests/ -q --tb=short
+[Run tests] 2026-09-07T18:15:47.1110476Z [36;1muv run --no-sync pytest tests/ -q --tb=short[0m
+[Run tests] 2026-09-07T18:15:47.1148365Z shell: /usr/bin/bash -e {0}
+[Run tests] 2026-09-07T18:15:47.1148621Z env:
+[Run tests] 2026-09-07T18:15:47.1148890Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+[Run tests] 2026-09-07T18:15:47.1149352Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+[Run tests] 2026-09-07T18:15:47.1149802Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+[Run tests] 2026-09-07T18:15:47.1150214Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+[Run tests] 2026-09-07T18:15:47.1150625Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+[Run tests] 2026-09-07T18:15:47.1151026Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+[Run tests] 2026-09-07T18:15:47.1151446Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+[Run tests] 2026-09-07T18:15:47.1152071Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+[Run tests] 2026-09-07T18:15:47.1152389Z ##[endgroup]
+[Run tests] 2026-09-07T18:16:03.6506603Z F....................................................................... [ 74%]
+[Run tests] 2026-09-07T18:16:03.9976004Z .........................                                                [100%]
+[Run tests] 2026-09-07T18:16:03.9976977Z =================================== FAILURES ===================================
+[Run tests] 2026-09-07T18:16:03.9977697Z _________________________ test_ci_can_actually_go_red __________________________
+[Run tests] 2026-09-07T18:16:03.9978348Z tests/test_ci_red_proof.py:18: in test_ci_can_actually_go_red
+[Run tests] 2026-09-07T18:16:03.9978869Z     assert observed == expected, (
+[Run tests] 2026-09-07T18:16:03.9980282Z E   AssertionError: deliberate failure — proving the CI test job runs the real suite
+[Run tests] 2026-09-07T18:16:03.9980936Z E   assert 1 == 2
+[Run tests] 2026-09-07T18:16:03.9981333Z =========================== short test summary info ============================
+[Run tests] 2026-09-07T18:16:03.9983078Z FAILED tests/test_ci_red_proof.py::test_ci_can_actually_go_red - AssertionError: deliberate failure — proving the CI test job runs the real suite
+[Run tests] 2026-09-07T18:16:03.9984091Z assert 1 == 2
+[Run tests] 2026-09-07T18:16:03.9984553Z 1 failed, 96 passed in 15.87s
+[Run tests] 2026-09-07T18:16:04.0522414Z ##[error]Process completed with exit code 1.
