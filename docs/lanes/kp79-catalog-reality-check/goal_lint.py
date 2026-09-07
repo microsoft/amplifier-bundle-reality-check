@@ -134,6 +134,31 @@ def lint_goal(text: str) -> list[Finding]:
             (bar[0] + 1, merge[0] + 1),
         ))
 
+    # CHECK 4 -- the goal requires a FINAL REPOSITORY STATE while forbidding the lane to merge.
+    # Only a merge changes repository state. If the document both demands an end state of the
+    # repo and prohibits the lane from merging, the condition is unreachable by any permitted
+    # action -- not merely hard, FORBIDDEN. This is the mirror of TERMINAL_BAR_IS_A_RACE:
+    # both arise from stating the bar as REPOSITORY STATE instead of LANE ACTION.
+    forbids_merge = [
+        i for i, ln in enumerate(lines)
+        if re.search(r"\b(never merge|do not merge|don't merge)\b", ln, re.I)
+    ]
+    demands_repo_state = [
+        i for i, ln in enumerate(lines)
+        if re.search(r"\b(final state|end state|the live system|state of the repo)\b", ln, re.I)
+        and not re.search(r"\b(demonstrated|shipped for landing|DONE AT THE DRAFT PR)\b", ln, re.I)
+    ]
+    if forbids_merge and demands_repo_state:
+        findings.append(Finding(
+            "FINAL_STATE_REQUIRES_A_FORBIDDEN_MERGE",
+            f"Line {demands_repo_state[0] + 1} makes the bar a FINAL REPOSITORY STATE while line "
+            f"{forbids_merge[0] + 1} forbids the lane to merge. Only a merge changes repository "
+            "state, so the condition is unreachable by any action the lane is permitted to take. "
+            "Either state the bar as a lane ACTION ('demonstrated and shipped for landing'), or "
+            "name the actor who performs the merge as part of the condition.",
+            (demands_repo_state[0] + 1, forbids_merge[0] + 1),
+        ))
+
     return findings
 
 
