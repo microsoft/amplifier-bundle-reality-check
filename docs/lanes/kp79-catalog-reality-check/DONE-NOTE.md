@@ -377,3 +377,26 @@ the two marked **N/A with the reason stated** (no skills in this repo; no CI in 
 
 `infra_ledger.sh` / `lane_teardown.sh` were **not** invoked — this lane created nothing to tear
 down. `sweep` was never run.
+
+---
+
+## 10. Publication
+
+Verified by an independent remote read, not by local belief
+(`publication_readback.sh`, `2026-09-07T16:48:50Z`):
+
+| Field | Value |
+|---|---|
+| repo | `microsoft/amplifier-bundle-reality-check` |
+| branch | `lane/kp79-catalog-reality-check` |
+| pushed | `true` |
+| PR | **[#15](https://github.com/microsoft/amplifier-bundle-reality-check/pull/15)** — `draft open` |
+| verified by | `git ls-remote --heads …` + `gh pr list --repo … --json number,url,state,headRefOid` |
+
+The PR is left **DRAFT and unmerged**, per the lane rules. This repo has no CI, so there is no
+green run to gate marking it ready — the manager should mark it ready and merge on review of
+the evidence above.
+
+**Re-check before merge:** `model_performance-kp79` was never claimable by this lane (§0). The
+manager should confirm the holding lane's resolution covers this repo, and consider whether
+`model_performance-yd8m` (§8) should land before or after this PR.
