@@ -11,6 +11,16 @@ model_role: [vision, general]
 provider_preferences:
   - provider: anthropic
     model: claude-opus-*
+# REQUIRED, not decorative. This agent's whole job is one delegate() call to
+# browser-tester:browser-operator. It is spawned BY tool-delegate, which ships
+# `exclude_tools: [tool-delegate]` (amplifier-foundation/behaviors/agents.yaml),
+# so `delegate` is filtered out of every agent it spawns UNLESS that agent's own
+# frontmatter names the module. The spawn-time escape hatch matches on
+# `t.get("module")`, so this MUST be a mount-plan entry (`- module: X`), never a
+# bare tool name. No `source:` -- the entry merges into the parent session's own
+# tool-delegate entry and inherits whatever source that session pinned.
+tools:
+  - module: tool-delegate
 ---
 
 # Browser Tester

@@ -8,7 +8,16 @@ meta:
 
     DO NOT USE WHEN: the check is a non-interactive command (run -> exit code + stdout + emitted files) -- that is `type: other` and belongs to generic-tester, not here. Web UIs go to browser-tester.
 model_role: [coding, general]
-tools: [terminal_inspector]
+# Mount-plan shape (`- module: X`), NOT a bare tool-name list. `terminal_inspector`
+# is the TOOL name; `tool-terminal-inspector` is the MODULE name
+# (amplifier-bundle-terminal-tester/behaviors/terminal-tester.yaml) and the module
+# name is what the spawn-time filter matches on. A bare string list does not merely
+# fail to match -- `[t.get("module") for t in agent_config["tools"]]` raises
+# AttributeError and the spawn fails outright. No `source:` -- this bundle's own
+# behaviors/reality-check.yaml already mounts the module, and a source-less entry
+# merges into that one instead of overriding its pin.
+tools:
+  - module: tool-terminal-inspector
 ---
 
 # Terminal Tester
