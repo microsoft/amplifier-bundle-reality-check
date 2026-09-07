@@ -146,3 +146,74 @@ a goal to be gamed.**
 | Live on `origin/main` | `865c3ee` — all five files show **0** `<example>` |
 | Terminal state | **A / resolved**, assessed 16:50 UTC, unchanged |
 | Spend | **$0.00** |
+
+---
+
+# DEFECT 3 — the goal's TITLE states the problem in the grammatical form of a target state
+
+**Found by:** a reviewer reading `GOAL.md:1` as the required end state and concluding this lane
+had shipped the exact opposite of what was asked. That misread is reproducible, and the title
+is the reason.
+
+## The title
+
+```
+GOAL.md:1     # Goal: 5 agents, all 5 carrying example blocks
+```
+
+Read alone, that is a specification: *all 5 agents carry example blocks.* Read in context, it
+names the **defect being fixed** — the same way a bug titled *"5 agents leaking memory"* is not
+a request to make five agents leak memory.
+
+## Everything else in the goal says the opposite, including the authoritative spec
+
+| Location | Text |
+|---|---|
+| `GOAL.md:51` | *"#341 set the **no-`<example>`** policy for agent descriptions"* |
+| `GOAL.md:54` (THE STANDARD) | *"**ZERO `<example>` / `<commentary>` blocks**"* |
+| `GOAL.md:61` | *"**MEASURED BEFORE LAUNCH** (verify, do not re-derive): 5 agents, and all 5 files contain `<example>`"* — labelled a **baseline**, not a target |
+| `GOAL.md:65` (DELIVERABLES) | *"**ZERO `<example>`/`<commentary>`**"* |
+| **work item `kp79` acceptance criteria** | *"...and contains **ZERO** `<example>` or `<commentary>` blocks."* |
+| **work item `kp79` title** | *"...trigger-first, ≤600 chars, **ZERO example blocks**, applied where #341's policy never reached"* |
+
+And `GOAL.md` Procedure 1 settles precedence explicitly:
+
+> *"the returned description + acceptance criteria are **the authoritative spec; this file
+> summarizes them**."*
+
+So the authoritative spec says **ZERO**, and `GOAL.md` — the summary — says ZERO in three
+separate places. **One line out of the whole document reads the other way, and it is the title.**
+
+`GOAL.md:61` is the decisive disambiguator inside the file itself: `MEASURED BEFORE LAUNCH` and
+`verify, do not re-derive` mark that sentence as the **starting** condition, already measured by
+whoever wrote the goal, to be confirmed rather than produced. A baseline is not a target.
+
+## THE PATCH
+
+```diff
+-# Goal: 5 agents, all 5 carrying example blocks
++# Goal: strip example blocks from 5 agent descriptions (baseline: all 5 carry them)
+```
+
+**Rule for the template:** a goal title must name the **change**, in the imperative, never the
+defect state in the indicative. Any baseline figure belongs in parentheses, explicitly labelled,
+or it will be read as the target. Cost: one line. It has now cost one full review cycle on this
+lane, and it is the kind of misread that would be far more expensive if a lane — rather than a
+reviewer — made it, because a lane acting on the title would *re-add* 4,704 bytes to every
+session's head and reverse #341 across the ecosystem.
+
+## What this lane will NOT do
+
+**Restore the `<example>` blocks.** Concretely, that would:
+
+1. Contradict the **authoritative** acceptance criteria (`ZERO`), which Procedure 1 ranks above
+   `GOAL.md`.
+2. Reverse work the manager already merged to `main` (`865c3ee`).
+3. Re-add **4,704 bytes / ~1,180 tokens** to the head of **every turn of every session** that
+   mounts this bundle.
+4. Reinstate exactly the violation `#341` exists to prevent, in the one repo where it was just
+   corrected.
+
+A reviewer's reading of a title does not outrank the authoritative spec, and no reading of any
+goal justifies a change whose measured effect is to make the product worse in the precise way
+the item was filed to fix.
