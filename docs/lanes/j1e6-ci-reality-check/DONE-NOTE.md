@@ -61,9 +61,14 @@ $ git ls-remote --heads origin scratch/j1e6-ci-red-proof | wc -l
 0
 ```
 
-**GREEN —** see `evidence/green-runs.txt` and the PR body of #19. The real PR
-carries the workflow and the two named fix commits, and **not** the deliberate
-failure.
+**GREEN —** run
+<https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34151125100>
+(PR #19, head `a6bbe02dba93d3f7916c5c45509ee0850240ae31`). All **5 jobs
+success**; `Tests — Python 3.11` → `Run tests` reads `96 passed in 15.75s`.
+Per-job URLs in `evidence/green-runs.txt`.
+
+The real PR carries the workflow and the two named fix commits, and **not** the
+deliberate failure — that reached only the scratch branch and is gone with it.
 
 ---
 
