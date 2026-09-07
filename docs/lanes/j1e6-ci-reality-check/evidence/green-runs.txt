@@ -1,0 +1,11 @@
+GREEN run #1 (head a6bbe02dba93d3f7916c5c45509ee0850240ae31)
+https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34151125100
+conclusion: success — all 5 jobs
+
+success	Tests — Python 3.12	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34151125100/job/101833460381
+success	Lint (ruff 0.15.11)	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34151125100/job/101833460585
+success	Bundle structure	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34151125100/job/101833460586
+success	Tests — Python 3.11	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34151125100/job/101833460626
+success	Tests — Python 3.13	https://github.com/microsoft/amplifier-bundle-reality-check/actions/runs/34151125100/job/101833460642
+
+Tests — Python 3.11 / Run tests: '96 passed in 15.75s'

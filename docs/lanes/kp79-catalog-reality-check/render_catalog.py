@@ -49,8 +49,14 @@ def main() -> int:
         b = len(f"  - {n}: {d}".encode())
         total += b
         print(f"{n:42s} desc_chars={len(d):5d}  catalog_bytes={b:5d}", file=sys.stderr)
-    print(f"{'JOIN newlines (n-1)':42s} {'':19s} catalog_bytes={len(entries) - 1:5d}", file=sys.stderr)
-    print(f"{'TOTAL CATALOG BLOCK':42s} {'':19s} catalog_bytes={len(block.encode()):5d}", file=sys.stderr)
+    print(
+        f"{'JOIN newlines (n-1)':42s} {'':19s} catalog_bytes={len(entries) - 1:5d}",
+        file=sys.stderr,
+    )
+    print(
+        f"{'TOTAL CATALOG BLOCK':42s} {'':19s} catalog_bytes={len(block.encode()):5d}",
+        file=sys.stderr,
+    )
     return 0
 
 

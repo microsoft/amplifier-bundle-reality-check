@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Minimal read-only token — no secrets needed or exposed.
+# Safe for Dependabot PRs and external fork contributors.
+#
+# NOTHING HERE CALLS AN LLM OR STANDS UP A CONTAINER. This bundle's real
+# validation loop (`scripts/run-reality-check-validation*.sh`, the
+# `reality-check-pipeline` recipe, the profiles under
+# `.amplifier/digital-twin-universe/`) needs API keys, Incus and a live Digital
+# Twin Universe, and costs real money per run. No job below invokes any of it,
+# and no job needs a key. Everything here is free and finishes in ~2 minutes.
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Lint — ruff, at a PINNED version.
+  #
+  # The pin is load-bearing, not fussiness. "ruff's default rules" is a moving
+  # target, and an unpinned linter turns an unrelated upstream release into a
+  # red PR nobody changed anything to cause. 0.15.11 is the version the rest of
+  # this bundle family is on (it is what amplifier-bundle-context-intelligence
+  # locks, and what amplifier-bundle-routing-matrix pins in its own CI).
+  #
+  # Both `check` and `format --check` run, UNSCOPED, over the whole tree. That
+  # is affordable here because it is already true: at 0.15.11 this repo reports
+  # "All checks passed!" and, after the one mechanical `ruff format` commit in
+  # this PR, "13 files already formatted". A narrowed selection is how a green
+  # lint job stops meaning anything, so it is not narrowed.
+  #
+  # `uvx ruff@0.15.11` needs no project install and no lockfile — it is
+  # byte-for-byte the command a contributor runs locally.
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint (ruff 0.15.11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          enable-cache: true
+
+      - name: Lint
+        run: uvx ruff@0.15.11 check .
+
+      - name: Check formatting
+        run: uvx ruff@0.15.11 format --check .
+
+  # ---------------------------------------------------------------------------
+  # Test suite across supported Python versions (pyproject: requires-python >=3.11).
+  #
+  # `uv sync` — NOT `uv sync --frozen`. This repo gitignores `uv.lock` on
+  # purpose (.gitignore, "# uv"), so there is no committed lockfile to freeze
+  # against and the resolution is fresh on every run. Two consequences, stated
+  # rather than discovered:
+  #   * pyproject declares two dependencies as `git+…@main`
+  #     (amplifier-bundle-digital-twin-universe, amplifier-bundle-gitea), so a
+  #     breaking change on either repo's main can turn this job red without a
+  #     commit here. That is a real cost of not committing a lock; it is
+  #     visible-and-loud rather than silent, which is the right trade for a
+  #     bundle whose own install path (`uv pip install -e . --no-sources`)
+  #     ignores a lockfile anyway.
+  #   * `uv sync` must run before pytest because the suite invokes the CLI as a
+  #     real subprocess (`uv run --no-sync --project … amplifier-reality-check`,
+  #     tests/helpers.py) against the project's own `.venv`. `--no-sync` on the
+  #     pytest call keeps that venv exactly as synced above.
+  #
+  # The import smoke is not redundant with the suite: the suite drives the CLI
+  # through a subprocess, so an import-time break in the library would surface
+  # as an opaque non-zero exit from a child process rather than a traceback.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests — Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --python ${{ matrix.python-version }}
+
+      - name: Import smoke
+        run: >
+          uv run --no-sync python -c
+          "import amplifier_bundle_reality_check as m; print(m.__file__)"
+
+      - name: Run tests
+        run: uv run --no-sync pytest tests/ -q --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Bundle structure — a cheap YAML parse of bundle.md's frontmatter (including
+  # that every `includes:` target actually exists on disk) and every
+  # behaviors/*.yaml. No network, no keys, ~1 second.
+  #
+  # The script treats an EMPTY glob as a FAILURE: a check that reports
+  # "0 problems in 0 files" and exits 0 looks exactly like a working one.
+  # ---------------------------------------------------------------------------
+  bundle-structure:
+    name: Bundle structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          enable-cache: true
+
+      - name: Check bundle structure
+        run: uv run --no-project --with pyyaml python .github/scripts/check_bundle_structure.py
