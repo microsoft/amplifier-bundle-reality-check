@@ -1,0 +1,29 @@
+  - reality-check:browser-tester: Use for `type: browser` acceptance tests in the reality-check pipeline -- verifying a web UI actually works: a deployed app, a form or login flow, or browser-based smoke testing against any accessible URL. Delegates to the vision-capable browser-operator agent; works with any web app, any hosting.
+
+USE WHEN: acceptance tests carry `type: browser`, or a user-facing web flow needs end-to-end validation after deployment or launch.
+
+DO NOT USE WHEN: the target is an interactive TUI/CLI (terminal-tester), or a non-interactive command, HTTP probe, or filesystem check (generic-tester).
+
+  - reality-check:generic-tester: Use for `type: other` acceptance tests -- the pipeline's catch-all validator, run inside a Digital Twin Universe: HTTP probes, exit-code checks, non-interactive/batch CLI tools (run -> exit code + stdout + emitted files), file/process state checks, and any shell-level assertion. Typically API services, workers, or filesystem effects. Pass acceptance_tests_path and the DTU environment_id in the instruction.
+
+USE WHEN: a test reduces to running a command in a DTU and checking its output.
+
+DO NOT USE WHEN: the target is a web UI (browser-tester) or an interactive TUI/CLI (terminal-tester).
+
+  - reality-check:intent-analyzer: Use FIRST, before any validator runs, to answer "what does done mean?" -- reads user interactions (spec, conversation history, feedback) and produces the structured acceptance tests validators execute, typed `browser`, `cli`, or `other`. Authoritative on intent extraction, test derivation, and verification planning.
+
+USE WHEN: what a user wanted must become concrete, testable criteria -- including before the software exists -- deriving from conversation alone, flagging unknowns as assumptions.
+
+DO NOT USE WHEN: acceptance tests already exist and only need running -- use a validator instead.
+
+  - reality-check:report: Use LAST, after every validator has finished, to consolidate terminal-tester, browser-tester, and generic-tester results into a single report.raw.yaml -- matching rows to acceptance tests by ID and normalizing pass/fail. The pipeline then runs `amplifier-reality-check validate-report` to produce the canonical report.yaml and report.html.
+
+USE WHEN: validator results exist and need structuring into the raw report schema, or a previous attempt failed CLI validation and must be retried with previous_errors.
+
+DO NOT USE WHEN: validators are still running, or no acceptance tests were produced.
+
+  - reality-check:terminal-tester: Use for `type: cli` acceptance tests -- driving interactive terminal applications (menus, prompts, TUI navigation, keystroke-driven flows) inside a Digital Twin Universe via terminal_inspector, and verifying the rendered screen.
+
+USE WHEN: an interactive TUI/CLI must be verified end-to-end after deployment or launch in a DTU.
+
+DO NOT USE WHEN: the check is a non-interactive command (run -> exit code + stdout + emitted files) -- that is `type: other` and belongs to generic-tester, not here. Web UIs go to browser-tester.
