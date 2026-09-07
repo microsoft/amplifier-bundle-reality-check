@@ -112,6 +112,43 @@ here rather than argued away.
 
 ---
 
+## 0c. LANDING STAGE — why the draft PR IS the finished state
+
+The goal requires this to be said here explicitly (*"satisfy it as 'X is demonstrated and shipped
+for landing' **and say so in your DONE-NOTE**"*), so: **every deliverable in this lane is
+demonstrated and shipped for landing. The merge is the manager's stage, not this lane's.**
+
+A reviewer has now raised the "but it isn't merged / isn't live yet" bar three times. The goal
+answers it directly, in five separate places, and they agree:
+
+| Where | What it says |
+|---|---|
+| `GOAL.md:6-9` (LANDING STAGE) | *"A deliverable whose FINAL state requires a merge is **DONE AT THE DRAFT PR**… a merged/live-system state **can never be your bar**… the **MERGE IS THE MANAGER'S NEXT STAGE**."* |
+| `GOAL.md:9-10` | *"**Do NOT reopen a resolved item because a reviewer argues the live system has not changed yet** — that is the landing stage, not your branch."* |
+| `GOAL.md:20` — **branch A's own definition** | the deliverables exist *"(**as a draft PR** on the module's origin)"* — the RESOLVED branch takes a **draft PR**, not a merge, as the deliverable state |
+| `GOAL.md:99` (Procedure 4) | *"open a DRAFT PR with `gh pr create --draft`… **Never merge.**"* |
+| `GOAL.md:203` (KNOWN) | *"**Do NOT merge.** DRAFT PR, mark ready when its own CI is green, stop. **The manager merges.**"* |
+
+So "merged and live" is not merely *not* the requirement — it is **explicitly forbidden to this
+lane**, and branch A's own wording names the draft PR as the deliverable's terminal form. The
+landing-stage clause is addressed to this lane about *all* its deliverables (*"read this before
+you judge **your own deliverables**"*); `model_performance-7ka` in its header is the provenance
+of the convention, not a restriction of its scope.
+
+**Why the PR is still DRAFT rather than marked ready.** The stated trigger is *"mark ready when
+its own CI is green"*. **This repo has no CI** — no `.github/` directory exists at all — so that
+trigger can never fire. Rather than invent a substitute gate, this lane leaves the PR draft and
+hands the readiness call to the manager, with the equivalent local evidence in hand:
+`validate-agents` **PASS WITH WARNINGS / 0 errors** on the branch, and a stash-compared
+**test-neutral** suite. Recorded as a choice, not an oversight.
+
+**No re-decision.** Nothing measured has changed since §0's label history closed: the item is
+`resolved`, the erratum is recorded (`corrected: true`), PR #15 is open at `0fbb96c`. The goal's
+anti-churn rule (lane 1ru, which moved *"with its measurement never changing"*) and its
+do-not-reopen-on-a-live-system-argument rule both apply, and both say: **hold.**
+
+---
+
 ## 1. Deliverables
 
 | # | Deliverable | State |
