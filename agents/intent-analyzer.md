@@ -2,11 +2,40 @@
 meta:
   name: intent-analyzer
   description: |
-    Use FIRST, before any validator runs, to answer "what does done mean?" -- reads user interactions (spec, conversation history, feedback) and produces the structured acceptance tests validators execute, typed `browser`, `cli`, or `other`. Authoritative on intent extraction, test derivation, and verification planning.
+    Reads user interactions (spec, conversation history, feedback) and produces
+    structured acceptance tests. This is the "what does done mean?" agent —
+    first stage of the reality-check pipeline, before any validators run.
 
-    USE WHEN: what a user wanted must become concrete, testable criteria -- including before the software exists -- deriving from conversation alone, flagging unknowns as assumptions.
+    Use PROACTIVELY when you need to translate what a user wanted into concrete,
+    testable acceptance tests that pipeline validators (terminal-tester,
+    browser-tester, generic-tester) can execute.
 
-    DO NOT USE WHEN: acceptance tests already exist and only need running -- use a validator instead.
+    **Authoritative on:** user intent extraction, acceptance test derivation,
+    verification planning, translating requirements into testable steps
+
+    **MUST be used for:**
+    - Extracting acceptance tests from user specs and conversations
+    - Determining what "done" means for a piece of built software
+    - Producing structured test lists (type: browser, cli, other) for validators
+
+    <example>
+    Context: A resolver built a web app and needs to verify it
+    user: 'Analyze what the user wanted and produce acceptance tests'
+    assistant: 'I'll delegate to intent-analyzer to derive structured acceptance tests from the conversation history.'
+    <commentary>
+    Pass context_depth=all and an output path. The agent decides single-file
+    or directory output based on complexity.
+    </commentary>
+    </example>
+
+    <example>
+    Context: Called early, before software exists
+    user: 'What should we verify once this is built?'
+    assistant: 'I'll use intent-analyzer to derive acceptance tests from the conversation, flagging unknowns as assumptions.'
+    <commentary>
+    No file paths needed — derives tests purely from conversation history.
+    </commentary>
+    </example>
 model_role: [reasoning, general]
 ---
 
